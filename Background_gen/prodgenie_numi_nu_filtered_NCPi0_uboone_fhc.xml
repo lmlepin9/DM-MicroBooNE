@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<!-- Production Project -->
+
+<!DOCTYPE project [
+<!ENTITY release "v08_00_00_45">
+<!ENTITY file_type "mc">
+<!ENTITY run_type "physics">
+<!ENTITY user "lmoralep">
+<!ENTITY name "prod_ncpi0_background">
+]>
+
+<job>
+
+<project name="&name;">
+
+  <!-- Project size -->
+  <numevents>750000</numevents>
+
+  <!-- Operating System -->
+  <os>SL7</os>
+
+  <!-- Batch resources -->
+  <resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>
+
+  <fcldir>/uboone/data/users/lmoralep/ncpi0_background</fcldir>
+
+  <!-- Larsoft information -->
+  <larsoft>
+    <tag>&release;</tag>
+    <qual>e17:prof</qual>
+  </larsoft>
+  
+
+  <stage name="run1_reco1">
+    <fcl>prodgenie_numi_nu_filtered_NCPi0_uboone_fhc.fcl</fcl>
+    <fcl>wirecell_g4_uboone.fcl</fcl>
+    <fcl>wirecell_detsim_numi_uboone.fcl</fcl>
+    <fcl>reco_uboone_mcc9_8_driver_stage1.fcl</fcl>
+    <outdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/run1_reco1/</outdir>
+    <logdir>/pnfs/uboone/scratch/users/&user;/log/numi_prod/&name;/run1_reco1/</logdir>
+    <workdir>/pnfs/uboone/resilient/users/&user;/work/numi_prod/&name;/run1_reco1/</workdir>
+    <numjobs>7500</numjobs>
+    <merge>1</merge>
+    <memory>8000</memory>
+  </stage>
+
+
+  <stage name="reco2">
+    <fcl>reco_uboone_mcc9_8_driver_stage2_numi_fullMC.fcl</fcl>
+    <outdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/run1_reco2/</outdir>
+    <logdir>/pnfs/uboone/scratch/users/&user;/log/numi_prod/&name;/run1_reco2/</logdir>
+    <workdir>/pnfs/uboone/resilient/users/&user;/work/numi_prod/&name;/run1_reco2/</workdir>
+    <maxfilesperjob>1</maxfilesperjob>
+    <numjobs>7500</numjobs>
+    <memory>8000</memory>
+  </stage>
+
+  <stage name="mergeana">
+    <fcl>standard_ana_uboone.fcl</fcl>
+    <datafiletypes>root</datafiletypes>
+    <outdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/mergeana</outdir>
+    <logdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/mergeana</logdir>
+    <workdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/mergeana</workdir>
+    <bookdir>/pnfs/uboone/resilient/users/&user;/work/numi_prod/&name;/mergeana</bookdir>
+    <maxfilesperjob>1</maxfilesperjob>
+    <numjobs>2000</numjobs>
+    <anadatatier>root-tuple</anadatatier>
+    <memory>8000</memory>
+    <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 </jobsub>
+    <jobsub_start>  --expected-lifetime=short</jobsub_start>
+    <schema>root</schema>
+  </stage>
+
+  <stage name="SinglePhoton">
+    <fcl>run_SinglePhoton.fcl</fcl>
+    <datafiletypes>root</datafiletypes>
+    <outdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/sp_ana</outdir>
+    <logdir>/pnfs/uboone/scratch/users/&user;/numi_prod/&name;/sp_ana</logdir>
+    <workdir>/pnfs/uboone/scratch/users/&user;/work/numi_prod/&name;/sp_ana</workdir>
+    <numjobs>2000</numjobs>
+    <anadatatier>root-tuple</anadatatier>
+    <memory>8000</memory>
+    <disk>20GB</disk>
+    <jobsub>--expected-lifetime=20h -e IFDH_CP_UNLINK_ON_ERROR=1 -f /pnfs/uboone/resilient/users/markross/tars/proton_conversion.root</jobsub>
+    <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 </jobsub>
+    <jobsub_start>  --expected-lifetime=short</jobsub_start>
+    <schema>root</schema>
+  </stage>
+
+
+
+
+  <!-- file type -->
+  <filetype>&file_type;</filetype>
+
+  <!-- run type -->
+  <runtype>&run_type;</runtype>
+
+</project>
+
+</job>

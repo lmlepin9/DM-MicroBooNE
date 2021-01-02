@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<!-- Production Project -->
+
+<!DOCTYPE project [
+<!ENTITY release      "v08_00_00_29c_dl" >
+<!ENTITY file_type    "data"      >
+<!ENTITY run_type     "physics"   >
+<!ENTITY name         "DM_CROSS_CHECK_LARCV">
+<!ENTITY prod_version "v0"        >
+]>
+
+<job>
+  <project name="&name;">
+    <!-- Project size -->
+    <numevents>24565</numevents>
+    
+    <!-- Operating System -->
+    <os>SL7</os>
+    
+    <!-- Batch resources -->
+    <resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>
+    
+    <!-- Larsoft information -->
+    <larsoft>
+      <tag>&release;</tag>
+      <qual>e17:prof</qual>
+    </larsoft>
+    <!-- Project stages -->
+  
+<stage name="LArCVImage">
+      <inputlist>/uboone/data/users/lmoralep/book/prod_dm_MC_CC/files.list</inputlist>
+      <fcldir>/build/lmoralep/mrbdev_v08_00_00_29c_dl/srcs/ubcv/ubcv/ubdlintegration</fcldir>
+      <fcl>mcc9_dlreco_driver_data_custom.fcl</fcl>
+      <outdir>/pnfs/uboone/scratch/users/lmoralep/&name;/out</outdir>
+      <logdir>/pnfs/uboone/scratch/users/lmoralep/&name;/log</logdir>
+      <workdir>/pnfs/uboone/scratch/users/lmoralep/&name;/work</workdir>
+      <bookdir>/uboone/data/users/lmoralep/book/&name;/</bookdir>
+      <numjobs>527</numjobs>
+      <maxfilesperjob>1</maxfilesperjob>
+      <memory>6000</memory>
+      <disk>20GB</disk>
+      <jobsub>--expected-lifetime=36h -e IFDH_CP_UNLINK_ON_ERROR=1 </jobsub>
+      <datatier>reco</datatier>
+    </stage>
+
+
+  </project>
+  
+</job>

@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!-- Production Project -->
+<!DOCTYPE project [
+<!ENTITY relsim "v08_00_00_43">
+<!ENTITY file_type "mc">
+<!ENTITY run_type "physics">
+<!ENTITY name "prod_dm_MC_CC">
+<!ENTITY tag "dm_CROSS_CHECK_SAMPLE">
+<!ENTITY user_name "users/lmoralep">
+]>
+<job>
+<project name="&name;">
+  <!-- Project size -->
+  <numevents>24565</numevents>
+   <!-- Operating System -->
+  <os>SL7</os>
+  <!-- Batch resources -->
+  <resource>DEDICATED,OPPORTUNISTIC</resource>
+  <!-- fcl directory -->
+  <fcldir>/uboone/data/users/lmoralep/dm_files/fcl</fcldir>
+  <!-- Larsoft information -->
+  <larsoft>
+    <tag>&relsim;</tag>
+    <qual>e17:prof</qual>
+  </larsoft>
+  <!-- Validate on worker -->
+  <check>0</check>
+  <copy>0</copy>
+  <!-- Project stages -->
+
+   <stage name="reco2">
+    <inputlist>/pnfs/uboone/persistent/users/lmoralep/dm_gen_cross_check_files.txt</inputlist>
+    <fcl>wirecell_g4_uboone.fcl</fcl>
+    <fcl>wirecell_detsim_numi_uboone.fcl</fcl>
+    <fcl>reco_uboone_mcc9_8_driver_stage1.fcl</fcl>
+    <fcl>reco_uboone_mcc9_8_driver_stage2_numi_fullMC.fcl</fcl>
+    <datafiletypes>root,pndr</datafiletypes>
+    <outdir>/pnfs/uboone/scratch/&user_name;/&tag;/&relsim;/reco/&name;</outdir>
+    <logdir>/pnfs/uboone/scratch/&user_name;/&tag;/&relsim;/reco/&name;</logdir>
+    <workdir>/pnfs/uboone/scratch/&user_name;/work/&tag;/&relsim;/reco/&name;</workdir>
+    <bookdir>/uboone/data/users/lmoralep/book/&name;/</bookdir>
+    <maxfilesperjob>1</maxfilesperjob>
+    <numjobs>531</numjobs>  <!-- Should match the number of files in the dataset -->
+    <datatier>reconstructed</datatier>
+    <memory>8000</memory>
+    <disk>20GB</disk>
+    <jobsub>--expected-lifetime=8h -e IFDH_CP_UNLINK_ON_ERROR=1 </jobsub>
+    <jobsub_start>  --expected-lifetime=short</jobsub_start>
+    <schema>root</schema>
+  </stage>
+
+  <stage name="mergeana">
+    <fcldir>/uboone/data/users/lmoralep/dm_files/fcl</fcldir>
+    <fcl>standard_ana_uboone.fcl</fcl>
+    <datafiletypes>root</datafiletypes>
+    <outdir>/pnfs/uboone/scratch/&user_name;/&tag;/&relsim;/mergeana_test/&name;</outdir>
+    <logdir>/pnfs/uboone/scratch/&user_name;/&tag;/&relsim;/mergeana_test/&name;</logdir>
+    <workdir>/pnfs/uboone/scratch/&user_name;/work/&tag;/&relsim;/mergeana_test/&name;</workdir>
+    <bookdir>/uboone/data/users/lmoralep/book/&name;/mergeana</bookdir>
+    <numjobs>527</numjobs>
+    <anadatatier>root-tuple</anadatatier>
+    <memory>2000</memory>
+    <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 </jobsub>
+    <jobsub_start>  --expected-lifetime=short</jobsub_start>
+    <schema>root</schema>
+  </stage>
+    
+
+  <!-- file type -->
+  <filetype>&file_type;</filetype>
+  <!-- run type -->
+  <runtype>&run_type;</runtype>
+</project>
+</job>
