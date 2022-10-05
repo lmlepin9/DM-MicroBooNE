@@ -35,7 +35,8 @@ using namespace std;
 
 void CreateStats(string mass_point){
 
-    string input_file = "./old_samples/dt_hists_mass_"+mass_point+".root";
+    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/old_samples/";
+    string input_file = parent_directory + "dt_hists_mass_"+ mass_point+".root";
     TFile* f = TFile::Open(input_file.c_str());
     TH1D* signal = (TH1D*) f->Get("signal");
     TH1D* bkg = (TH1D* ) f->Get("background");
@@ -125,7 +126,7 @@ void CreateStats(string mass_point){
 
 
     //Write the workspace in root file
-    string output_file = "./old_samples/stats_space_energy_"+mass_point+".root";
+    string output_file = parent_directory + "stats_space_energy_"+mass_point+".root";
     w.writeToFile(output_file.c_str(),"RECREATE");
 
 
@@ -134,7 +135,7 @@ void CreateStats(string mass_point){
     TCanvas *c = new TCanvas("c","c",500, 500);
     c->SetLogy();
     myFrame->Draw();
-    string out_img_name = "./old_samples/fitted_model_mass_ " + mass_point + ".png";
+    string out_img_name = parent_directory + "fitted_model_mass_ " + mass_point + ".png";
     c->SaveAs(out_img_name.c_str());
 }
 

@@ -45,8 +45,9 @@ void MacroPlot(std::string mass_point){
     // cuts used in the first iteration 
     std::string cut_vars = "n_vertex == 1 && n_showers >= 1 && shower_dir >= 0.99 && signal_score >= 0.9";
     std::string plot_var = "E_total"; 
-    std::string out_image_string ="./old_samples/energy_distribution_" + mass_point + ".png";
-    std::string output_root_files="./old_samples/dt_hists_mass_" + mass_point+".root";
+    std::string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/";
+    std::string out_image_string = parent_directory + "old_samples/energy_distribution_" + mass_point + ".png";
+    std::string output_root_files= parent_directory + "old_samples/dt_hists_mass_" + mass_point+".root";
     std::cout<<"Test output image :" << out_image_string << std::endl;
     const char *out_img_name = out_image_string.c_str();
     bool is_scalar = false; 
@@ -89,10 +90,10 @@ void MacroPlot(std::string mass_point){
     double min_val = 0.;
     double max_val = 1500.;
 
-    auto fileName_neutrino = "./NCPi0_info_mpid_scores_8441_steps_EXT.csv";
-    auto fileName_b = "./NCeta_info_mpid_scores_8441_steps_EXT.csv";
-    auto fileName_c = "./NCgamma_info_mpid_scores_8441_steps_EXT.csv";
-    auto fileName_signal = "./dt_overlay_"+ mass_point +"_CNN_scores_8441_steps.csv";
+    auto fileName_neutrino = parent_directory + "NCPi0_info_mpid_scores_8441_steps_EXT.csv";
+    auto fileName_b = parent_directory + "NCeta_info_mpid_scores_8441_steps_EXT.csv";
+    auto fileName_c = parent_directory + "NCgamma_info_mpid_scores_8441_steps_EXT.csv";
+    auto fileName_signal = parent_directory + "dt_overlay_"+ mass_point +"_CNN_scores_8441_steps.csv";
     auto df_standard = ROOT::RDF::MakeCsvDataFrame(fileName_neutrino);
     auto df_dirt = ROOT::RDF::MakeCsvDataFrame(fileName_b);
     auto df_ext = ROOT::RDF::MakeCsvDataFrame(fileName_c);
@@ -198,11 +199,11 @@ void MacroPlot(std::string mass_point){
     hs1->Add(h1);
 
 
-
+    std::cout<<"On histogram: " << std::endl;
+    std::cout<<"Number of DM events: " << h4->Integral() << std::endl;
     std::cout<<"Number of NCpi0: " << h1->Integral() << std::endl;
     std::cout<<"Number of NCeta: " << h2->Integral() << std::endl;
     std::cout<<"Number of NCgamma: " << h3->Integral() << std::endl;
-    std::cout<<"Number of DM events: " << h4->Integral() << std::endl;
 
     float n_dt = std::floor(h4->Integral());
     float n_standard = std::floor(h1->Integral());
