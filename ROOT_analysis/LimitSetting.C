@@ -38,9 +38,12 @@
 #include "RooStats/HypoTestInverterResult.h"
 #include "RooStats/HypoTestInverterPlot.h"
 
+#include <stdlib.h>
 
-/* Macro to obtain limits on the dark trident parameter space
-   Based on RooStats tutorials and Anyssa's Dark Side code 
+/* 
+
+   Macro to set limits on the dark trident parameter space
+   Based on RooStats tutorials and Anyssa's code for Dark Side  
 
 */ 
 
@@ -48,6 +51,7 @@
 
 using namespace RooStats;
 using namespace RooFit;
+using namespace std;
 
 HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
                      const char* modelConfigName,
@@ -56,38 +60,90 @@ HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
 
 void PLLTestLimits(){
 
-    TFile *file = NULL;
-    file = TFile::Open("./old_samples/stats_space_energy_0.01.root");
 
+    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/old_samples/";
+    vector<string>  masses= {"0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "0.09", "0.1"};
+    TFile *file = NULL;
     TGraphErrors* gobs = new TGraphErrors;
     TGraph * g0 = new TGraph;
     TGraphAsymmErrors* g1 = new TGraphAsymmErrors;
     TGraphAsymmErrors* g2 = new TGraphAsymmErrors;
-
     RooWorkspace* w;
     RooRealVar* nsig_0;
     HypoTestInverterResult *r;
+    double mass_point; 
+    int counter = 0; 
+    for(string m: masses){
+      cout << "Processing mass point: " << m << std::endl; 
 
-    w = (RooWorkspace*) file->Get("w_0.01");  
-    w->Print();
-    nsig_0 = (RooRealVar*) w->obj("nsig_0"); 
-    r = SimpleHypoTestInv(w, "ModelConfig_0.01", "data");
+      string file_name = parent_directory + "stats_space_energy_" + m + ".root";
+      file = TFile::Open(file_name.c_str());
+      mass_point = atof(m.c_str());
+      string ws_name = "w_" + m;
+      w = (RooWorkspace*) file->Get(ws_name.c_str());  
+      //w->Print(); could be use for check that everyting is in place 
+      nsig_0 = (RooRealVar*) w->obj("nsig_0");
+      string mc_name = "ModelConfig_" + m;  
+      r = SimpleHypoTestInv(w,mc_name.c_str(), "data");
 
-    // Scale back to SM coupling  
-    double norm = pow(1e-3,4)/nsig_0->getValV();
+       
+      double norm = pow(1e-3,4)/nsig_0->getValV(); // scaling factor to get the respective SM coupling value 
+      double upperLimit = TMath::Sqrt(r->UpperLimit()*norm);
+      double median = TMath::Sqrt(r->GetExpectedUpperLimit(0)*norm);
+      double neg1sig =  TMath::Sqrt(r->GetExpectedUpperLimit(-1)*norm);
+      double posi1sig =  TMath::Sqrt(r->GetExpectedUpperLimit(1)*norm);
+      double neg2sig =  TMath::Sqrt(r->GetExpectedUpperLimit(-2)*norm);
+      double posi2sig =  TMath::Sqrt(r->GetExpectedUpperLimit(2)*norm);
+      
+      std::cout << "Upper limit: " << upperLimit << std::endl;
+      std::cout << "Expected limit: " << median << std::endl;
+      std::cout << "Expected limit(+1 sig)" << posi1sig << std::endl;
+      std::cout << "Expected limit(-1 sig)" << neg1sig << std::endl;
 
-    double upperLimit = TMath::Sqrt(r->UpperLimit()*norm);
-    double median = TMath::Sqrt(r->GetExpectedUpperLimit(0)*norm);
-    double neg1sig =  TMath::Sqrt(r->GetExpectedUpperLimit(-1)*norm);
-    double posi1sig =  TMath::Sqrt(r->GetExpectedUpperLimit(1)*norm);
-    double neg2sig =  TMath::Sqrt(r->GetExpectedUpperLimit(-2)*norm);
-    double posi2sig =  TMath::Sqrt(r->GetExpectedUpperLimit(2)*norm);
-    
-    std::cout << "Upper limit: " << upperLimit << std::endl;
-    std::cout << "Expected limit: " << median << std::endl;
-    std::cout << "Expected limit(+1 sig)" << posi1sig << std::endl;
-    std::cout << "Expected limit(-1 sig)" << neg1sig << std::endl;
+      gobs->SetPoint(counter, mass_point,  upperLimit);
+      g0->SetPoint(counter, mass_point,  median);
+      g1->SetPoint(counter,mass_point,  median);
+      g1->SetPointEYlow(counter, median - neg1sig); // -1 sigma errorr
+      g1->SetPointEYhigh(counter, posi1sig - median);//+1 sigma error
+      g2->SetPoint(counter, mass_point, median);
+      g2->SetPointEYlow(counter, median - neg2sig);   // -2 -- -1 sigma error
+      g2->SetPointEYhigh(counter, posi2sig - median);
+      file->Close(); 
+      counter+=1;
 
+    }
+  gobs->SetLineWidth(2);
+  gobs->SetMarkerStyle(20);
+  
+  TMultiGraph* graph = new TMultiGraph("Limit","Limit");
+  // set the graphics options and add in multi graph
+  // orderof adding is drawing order
+  g2->SetFillColor(kYellow); graph->Add(g2,"3");
+  g1->SetFillColor(kGreen); graph->Add(g1,"3");
+  g0->SetLineStyle(2); g0->SetLineWidth(1);
+  graph->Add(g0,"L");
+  
+  TCanvas *cc = new TCanvas("cc","");
+  cc->SetTicks(1, 1);
+  cc->Draw();
+  cc->SetLogx();
+  cc->SetLogy();
+  
+  graph->GetXaxis()->SetLimits(1e-2,1e-1);
+  graph->GetYaxis()->SetLimits(1e-11,1e-5);
+  graph->Draw("A");
+  if (graph->GetHistogram()) graph->GetHistogram()->SetTitle( "; M_{A'} [GeV/c^{2}]; #varepsilon^{2}" );
+  
+  gobs->Draw("SAME PL");
+  
+  cc->Update();
+
+  string output_plot = parent_directory+"PLL_Limit_DT.pdf";
+  //cc->Print("PLL_Limit_DT.eps");
+  cc->Print(output_plot.c_str());
+
+  
+  gPad->Update();
 }
 
 
@@ -104,7 +160,7 @@ HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
   ////////////////////////////////////////////////////////////
 
   std::cout << "Running HypoTestInverter on the workspace " << w->GetName() << std::endl;
-  w->Print();
+  //w->Print();
 
   // get the modelConfig out of the file
   RooStats::ModelConfig* mc = (RooStats::ModelConfig*) w->obj(modelConfigName);
@@ -175,7 +231,7 @@ HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
 
   ac.SetOneSided(true);  // for one-side tests (limits)
   //  ac->SetQTilde(true);
-  AsymptoticCalculator::SetPrintLevel(-1);
+  AsymptoticCalculator::SetPrintLevel(0);
 
   cout << "Calculator def" << endl;
   
@@ -211,7 +267,7 @@ HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
 //  // for CLs (bounded intervals) use one-sided profile likelihood
   if (useCLs) profll.SetOneSided(true);
 
-  profll.EnableDetailedOutput(); //detailed outputs
+  //profll.EnableDetailedOutput(); //detailed outputs
 
 #ifndef UseAsym
   // set the test statistic to use 
