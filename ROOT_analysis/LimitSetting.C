@@ -53,19 +53,41 @@ using namespace RooStats;
 using namespace RooFit;
 using namespace std;
 
+
+
+
 HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
                      const char* modelConfigName,
                      const char* dataName );
 
 
+
+
 void PLLTestLimits(){
 
+    // Set gStyle parameters and canvas dimensions:
+    gROOT->ForceStyle(1);
+    gStyle->SetOptStat(0); // Turn off statistics chart
+    gStyle->SetPadTopMargin(0.07); gStyle->SetPadBottomMargin(0.16);
+    gStyle->SetPadRightMargin(0.05); gStyle->SetPadLeftMargin(0.15);
+    //gStyle->SetHistLineColor(kBlack); gStyle->SetHistLineWidth(1);
+    gStyle->SetLegendTextSize(0.035); 
 
-    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/old_samples/";
+
+    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/Official/";
+    string old_limits_file = parent_directory + "old_limits.csv";
+
+    // Open limits obtained using single bin counting experiment 
+    auto df_old_limits = ROOT::RDF::MakeCsvDataFrame(old_limits_file.c_str());
+    auto a01_col = df_old_limits.Take<double>("epsilon_a01");
+    auto a1_col = df_old_limits.Take<double>("epsilon_a1");
     vector<string>  masses= {"0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "0.09", "0.1"};
+
+
     TFile *file = NULL;
     TGraphErrors* gobs = new TGraphErrors;
     TGraph * g0 = new TGraph;
+    TGraph * g_a01 = new TGraph; 
     TGraphAsymmErrors* g1 = new TGraphAsymmErrors;
     TGraphAsymmErrors* g2 = new TGraphAsymmErrors;
     RooWorkspace* w;
@@ -102,6 +124,7 @@ void PLLTestLimits(){
 
       gobs->SetPoint(counter, mass_point,  upperLimit);
       g0->SetPoint(counter, mass_point,  median);
+      g_a01->SetPoint(counter,mass_point,a01_col->at(counter));
       g1->SetPoint(counter,mass_point,  median);
       g1->SetPointEYlow(counter, median - neg1sig); // -1 sigma errorr
       g1->SetPointEYhigh(counter, posi1sig - median);//+1 sigma error
@@ -121,7 +144,9 @@ void PLLTestLimits(){
   g2->SetFillColor(kYellow); graph->Add(g2,"3");
   g1->SetFillColor(kGreen); graph->Add(g1,"3");
   g0->SetLineStyle(2); g0->SetLineWidth(1);
+  g_a01->SetLineStyle(2); g_a01->SetLineWidth(1); g_a01->SetLineColor(kBlue);
   graph->Add(g0,"L");
+  //graph->Add(g_a01,"L");
   
   TCanvas *cc = new TCanvas("cc","");
   cc->SetTicks(1, 1);
@@ -129,8 +154,7 @@ void PLLTestLimits(){
   cc->SetLogx();
   cc->SetLogy();
   
-  graph->GetXaxis()->SetLimits(1e-2,1e-1);
-  graph->GetYaxis()->SetLimits(1e-11,1e-5);
+
   graph->Draw("A");
   if (graph->GetHistogram()) graph->GetHistogram()->SetTitle( "; M_{A'} [GeV/c^{2}]; #varepsilon^{2}" );
   
@@ -140,7 +164,16 @@ void PLLTestLimits(){
 
   string output_plot = parent_directory+"PLL_Limit_DT.pdf";
   //cc->Print("PLL_Limit_DT.eps");
+  graph->GetXaxis()->SetLimits(1e-2,1e-1);
+  graph->GetYaxis()->SetLimits(1e-11,1e-5);
+  graph->GetXaxis()->SetLabelSize(0.04);
+  graph->GetXaxis()->SetTitleOffset(0.98);
+  graph->GetXaxis()->SetTitleSize(0.045);
+  graph->GetYaxis()->SetLabelSize(0.04);
+  graph->GetYaxis()->SetTitleOffset(1.12);
+  graph->GetYaxis()->SetTitleSize(0.045);
   cc->Print(output_plot.c_str());
+
 
   
   gPad->Update();
@@ -152,7 +185,7 @@ void PLLTestLimits(){
 
 HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
                      const char* modelConfigName,
-                     const char* dataName )
+                     const char* dataName)
 {
 
   /////////////////////////////////////////////////////////////
@@ -334,6 +367,7 @@ HypoTestInverterResult* SimpleHypoTestInv( RooWorkspace* w,
         SamplingDistPlot * pl = plot->MakeTestStatPlot(i);
         pl->SetLogYaxis(true);
         pl->Draw();
+        
      }
   }
 

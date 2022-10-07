@@ -35,7 +35,7 @@ using namespace std;
 
 void CreateStats(string mass_point){
 
-    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/old_samples/";
+    string parent_directory = "/home/lmlepin/Desktop/dm_sets/dark_tridents_analysis/Official/";
     string input_file = parent_directory + "dt_hists_mass_"+ mass_point+".root";
     TFile* f = TFile::Open(input_file.c_str());
     TH1D* signal = (TH1D*) f->Get("signal");
