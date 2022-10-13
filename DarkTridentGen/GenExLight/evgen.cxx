@@ -135,7 +135,8 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
   const double a = 0.52 /* fm */ * invGeV_per_fm;
   const double s = 0.9 /* fm */ * invGeV_per_fm;
   const double R = TMath::Sqrt(c*c+7*TMath::Pi()*TMath::Pi()*a*a/3.-5.*s*s);
-  const double FF = 3.*TMath::BesselJ1(q*R)/(q*R)*TMath::Exp(-q2*s*s/2.);
+  //const double FF = 3.*TMath::BesselJ1(q*R)/(q*R)*TMath::Exp(-q2*s*s/2.); // Cylindrical Bessel
+  const double FF = 3. * std::sph_bessel(1, q*R)/(q*R)*TMath::Exp(-q2*s*s/2.); // Spherical Bessel function 
 
   using TMath::Power;
 
@@ -463,6 +464,8 @@ void generate_interaction(const double ene, const TVector3& mom,
 
 }
 
+
+
 TGraph* get_xsec(const string& dir) {
   TChain t("xsec");
   t.Add(Form("%s/events_*MeV.root",dir.c_str()));
@@ -481,6 +484,14 @@ TGraph* get_xsec(const string& dir) {
   g->SetBit(TGraph::kIsSortedX);
   return g;
 }
+
+/*
+TGraph* get_xsec(const string& file) {
+  TFile *f  = TFile::Open(file.c_str());
+  TGraph *g = (TGraph *)f->Get("gxsec");
+  return g;
+}*/ 
+
 
 int main(int argc, char** argv)
 {
@@ -547,11 +558,16 @@ int main(int argc, char** argv)
   double maxE = intree->GetMaximum("E");
   //const double maxL = inttree->GetMaximum("L");
 
+
+
   TGraph *xsec = get_xsec(xsecdir);
   if(!xsec) {
     cerr << "Failed to make xsec" << endl;
     return -1;
   }
+
+
+
   double maxXE, dummy;
   xsec->ComputeRange(dummy,dummy,maxXE,dummy);
   if(maxXE < maxE) {
@@ -622,6 +638,10 @@ int main(int argc, char** argv)
     ot->Branch("outP_pr",&outE_pr);
   }
 
+  //outputFile.close();
+  char filename[150]="./test_hepevt.txt";
+  outputFile.open(filename);
+
   for(int i = 0; i < intree->GetEntries(); ++i) {
     intree->GetEntry(i);
     if(ene <= mX+mV) continue;
@@ -664,16 +684,23 @@ int main(int argc, char** argv)
       dgam *= det_rot;
       epos *= det_rot;
       eneg *= det_rot;
-
-      if(ievt % 50 == 0){
-        outputFile.close();
-        char filename[150];
-        sprintf(filename,"./hepevt_ouputs/hepevt_test_%d_run_%d.txt",file_index,stoi(outn));
-        outputFile.open(filename);
-        file_index+=1;
-      }
+      
 
       cout << ievt << " " << 4 << " " << decay_type << " " << origin_id << endl;
+
+       //    status      pdg         mother1     mother2     daugher1  daughter2
+      cout << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
+		 << xmom.X() <<" " << xmom.Y() << " " << xmom.Z() <<" " <<ene <<" "<< mX <<" "
+		 << orig.X() * cm << " " << orig.Y() * cm << " " << orig.Z() * cm << " " << vt <<endl;
+      cout << 2 << " " << 80 << " " << 1 << " " << 1 << " " << 3 <<" "<< 4 << " "
+		 << dgam.X() <<" " << dgam.Y() << " " << dgam.Z() <<" " <<dgam.E() <<" "<< dgam.M()  <<" "
+		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
+      cout << 1 << " " << -11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
+		 << epos.X() <<" " << epos.Y() << " " << epos.Z() <<" " <<epos.E() <<" "<< epos.M()  <<" "
+		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
+      cout << 1 << " " << 11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
+		 << eneg.X() <<" " << eneg.Y() << " " << eneg.Z() <<" " <<eneg.E() <<" "<< eneg.M()  <<" "
+		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
 
       outputFile << ievt << " " << 4 << " " << decay_type << " " << origin_id << endl;
       //    status      pdg         mother1     mother2     daugher1  daughter2
@@ -690,6 +717,7 @@ int main(int argc, char** argv)
 		 << eneg.X() <<" " << eneg.Y() << " " << eneg.Z() <<" " <<eneg.E() <<" "<< eneg.M()  <<" "
 		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
       ievt++;
+
 
       if(of) {
         TLorentzVector vX(xmom.X(),xmom.Y(),xmom.Z(),ene);
@@ -711,6 +739,7 @@ int main(int argc, char** argv)
     }
   }
   cout << "Final number of events: " << ievt << endl;
+  outputFile.close();
   if(of) {
     of->cd();
     ot->Write();
