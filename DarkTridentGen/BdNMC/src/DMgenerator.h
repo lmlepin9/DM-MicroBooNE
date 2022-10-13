@@ -17,6 +17,8 @@ class DMGenerator{
         std::string Channel_Name(){return chan_name;}
         void set_model_params(double MV, double MX, double kap, double alp){mv=MV; mx=MX; kappa=kap; alphaD=alp; Evaluate_Branching_Ratio();}
         bool query_off_shell(){return OFF_SHELL;}
+        void set_ntrials(int n_trials){ntrials = n_trials;}
+        int NTrials(){return ntrials;}
         virtual ~DMGenerator(){};
     protected:
         virtual void Evaluate_Branching_Ratio() {};
@@ -25,6 +27,7 @@ class DMGenerator{
         std::string chan_name;
         double branchingratio;
         double pmax;
+        int ntrials;
 };
 
 class pion_decay_gen: public DMGenerator{

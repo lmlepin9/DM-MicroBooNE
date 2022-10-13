@@ -101,6 +101,7 @@ class Parameter{
         std::string Output_File(){return output_file;}
 		std::string Output_Mode(){return output_mode;}
 		std::string Summary_File(){return summary_file;}
+		std::string Root_File(){return root_file;}
         std::shared_ptr<detector> Get_Detector(){return det;}
 		std::shared_ptr<std::list<production_channel> > Get_Production_List(){return prodlist;}
 		std::string Run_Name(){return run_name;}
@@ -130,6 +131,7 @@ class Parameter{
 		double meson_per_pi0;
         std::string output_file;
         std::string summary_file;
+		std::string root_file;
 		std::string output_mode;
         bool coherent;
 

@@ -19,6 +19,7 @@
 #include "Integrator.h"
 #include "detector.h"
 #include "record.h"
+#include "record_root.h"
 #include "Particle.h"
 #include "Random.h"
 #include "decay.h"
@@ -32,6 +33,12 @@
 #include "Position_Distributions.h"
 #include "Axion_Dark_Photon.h"
 #include "SignalDecay.h"
+
+//ROOT includes 
+#include <TFile.h>
+#include <TTree.h>
+#include <TString.h>
+
 
 //Plotting stuff
 //#include "DMNscattering.h"
@@ -143,6 +150,12 @@ int main(int argc, char* argv[]){
     summary_filename = "../Events/summary.dat";
   }
 
+
+  string root_filename = par->Root_File();
+  if(root_filename == ""){
+    root_filename = "../root_output.root";
+  }
+
   //Signal Channel
   string sigchoice = par->Signal_Channel();
   //Particles with this name will be checked for intersection with the
@@ -163,6 +176,23 @@ int main(int argc, char* argv[]){
     }
   }
 
+  //ROOT output setup 
+
+  TTree *outtree = make_event_tree();
+  TTree* pot_tree = make_pot_tree();
+  TTree* model_tree = make_model_tree();
+
+  TFile *outfile = 0;
+  
+  if(outmode=="root_output"||outmode == "dm_dist_root"){
+    outfile = new TFile(root_filename.c_str(), "recreate");
+    if(!outfile->IsOpen()){
+      cout << "Unable to open ROOT output file: " << root_filename << endl;
+      parstream.close();
+      return 1;
+    }
+  }
+
   parstream.close();
 
   //Run Parameters
@@ -177,6 +207,16 @@ int main(int argc, char* argv[]){
   double alD = par->alD();
   double mv = par->MassDP();
   double mdm = par->MassDM();	
+
+  cout << "Model parameters" <<endl;
+  cout << "alD " << alD << endl;
+  cout << "epsilon " << kappa << endl;
+  cout << "mA' " << mv << endl;
+  cout << "mDM " << mdm << endl;
+  //cout << "DM type " << decay_type << endl;
+
+
+  record_model(model_tree, alD, kappa, mdm, mv);
 
   //This will turn into a Model class later on.
   Axion_Dark_Photon adp(par);
@@ -654,10 +694,11 @@ int main(int argc, char* argv[]){
     BURN_MAX=1000;
   }
 
-  if(outmode=="dm_detector_distribution"){
+  if(outmode=="dm_detector_distribution"||outmode=="dm_dist_root"){
     BURN_MAX = 0;
     cout << "Detector_Mode selected.\nSkipping Burn-In.\n";
   }
+
 
 
 
@@ -712,7 +753,7 @@ int main(int argc, char* argv[]){
   bool scatter_switch;
   int trials_max = par->Max_Trials();
   //if(SigGen->get_pMax()*Vnumtot<=1){
-  if(SigGen->get_pMax()<=0&&outmode!="dm_detector_distribution"){
+  if(SigGen->get_pMax()<=0&&(outmode!="dm_detector_distribution" && outmode != "dm_dist_root")){
     cout << "pMax less than tolerance limit, skipping remainder of run\n";
   }
   else{
@@ -733,6 +774,7 @@ int main(int argc, char* argv[]){
       list<Particle> vec;
       Particle dist_part (0);
       PartDist_list[i]->Sample_Particle(dist_part);
+      bool isOther = false;
       if(DMGen_list[i]->GenDM(vec, det_int, dist_part)){
         //Yes, this list is named vec.  
         for(list<Particle>::iterator iter = vec.begin(); iter != vec.end();iter++){
@@ -748,6 +790,23 @@ int main(int argc, char* argv[]){
             }
             //may need to replace this with a list<Particle> later
             //cout << SigGen->get_pMax() << endl;
+            if(outmode == "root_output" || outmode == "dm_dist_root"){
+
+              //std::cout << "Root Output" << std::endl;
+
+              //std::cout << "Event " << nevent << " " <<  iter->name << std::endl;
+              record_root(outtree, vec, nevent, isOther, DMGen_list[i]->Channel_Name(), det);
+              isOther = true;
+              scatter_switch=true;
+
+              //++nevent;
+              //std::cout << "Event " << nevent << "/5000" << std::endl;
+
+              continue;
+            }
+
+
+
             if(SigGen->probscatter(det, vec, iter)){
               //cout << "Scatter?\n"; 
               scat_list[i]++;
@@ -759,6 +818,8 @@ int main(int argc, char* argv[]){
               }
               scatter_switch = true;	
             }
+            
+
             else{
               iter = vec.erase(iter);
               iter--;
@@ -772,8 +833,14 @@ int main(int argc, char* argv[]){
         Record_Particles(*comprehensive_out, vec);
         *comprehensive_out << "endevent " << nevent << endl << endl;    
       }
-      else if(scatter_switch)
+
+      else if(scatter_switch && outmode=="dm_dist_root"){
+
         ++nevent;
+        if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
+
+      }
+
     } 
   }
   cout << "Run complete\n";
@@ -821,10 +888,26 @@ int main(int argc, char* argv[]){
     *summary_out << "Total " << mv  <<  " "  << mdm << " " << trials << " " << kappa << " " << alD << " " << sigchoice << " " << POT << " " << Vnumtot << " " << samplesize << " " << (double)NDM/(2*trials) << " " << endl;
   }
 
+  else if (outmode == "root_output"|| outmode == "dm_dist_root"){
+
+    record_pot(pot_tree, DMGen_list);
+
+  }
+
   summary_out->close();
 
   if(outmode=="dm_detector_distribution"||outmode=="comprehensive")
     comprehensive_out->close();
+
+  if(outmode == "root_output"||outmode == "dm_dist_root"){
+
+    outfile->cd();
+    pot_tree->Write();
+    model_tree->Write();
+    outtree->Write();
+    outfile->Close();
+
+  }
 
   cout << "Number of trials = " << trials << endl;	
   cout << "Number of candidates intersecting detector = " << NDM << endl;	

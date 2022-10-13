@@ -425,6 +425,13 @@ Parameter::Parameter(std::ifstream &instream){
         else{
             summary_file = "";
         }
+
+        if(keymap.count(rootkey)==1){
+            root_file = keymap[rootkey];
+        }
+        else{
+            root_file = "";
+        }
     }
     else{
         std::cerr << "Parameter file not open.\n";

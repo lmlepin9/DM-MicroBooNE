@@ -44,6 +44,8 @@ const string signalkey = "signal_channel";
 const string coherent_key = "coherent";
 const string outkey = "output_file";
 const string sumkey = "summary_file";
+const string rootkey = "root_file";
+
 const string output_mode_key = "output_mode"; const string out_mode_def = "comprehensive";
 const string efficiency_key = "efficiency";
 const string POTkey = "POT";
