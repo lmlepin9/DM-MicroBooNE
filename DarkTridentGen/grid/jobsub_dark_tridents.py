@@ -19,16 +19,17 @@ USER                  = os.getenv("USER")
 DO_TAR                = True
 MA_DIR                = 0.05 
 RATIO                 = 0.6                                                                                                                                                                                                                           
-NEVTS                 = 50
-N_JOBS                = 100
+NEVTS                 = 200
+N_JOBS                = 5
 ALD                   = 0.1
 DM_TYPE               = "scalar"
 DECAY_CHAN            = "all"
 RUN_NUMBER            = 20220727
+SEED                  = 20220727
 SIGNAL                = "parameter_space"
-OUTDIR                = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/{DECAY_CHAN}/run{RUN_NUMBER}/{mA}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
-LOGDIR                = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/{DECAY_CHAN}/run{RUN_NUMBER}/{mA}/log".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
-TEMPLATE              = "/pnfs/uboone/resilient/users/anavrera/dark_tridents/templates/template_parameter_uboone_root_all.dat"
+OUTDIR                = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/{DECAY_CHAN}/run_{RUN_NUMBER}/{mA}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
+LOGDIR                = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/{DECAY_CHAN}/run_{RUN_NUMBER}/{mA}/log".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
+TEMPLATE              = "/pnfs/uboone/resilient/users/lmoralep/DarkTridentGen/template_parameter_uboone_root_all.dat"
 FILETAG               = ""
 TARFILE_NAME          = "local_install_dark_tridents.tar.gz"
 
@@ -57,7 +58,7 @@ def get_options():
     bdnmc_group.add_option('--dm_type', default = DM_TYPE, help='Specify value of alD. Default = 0.1')
     bdnmc_group.add_option('--decay_channel', default = DECAY_CHAN, help='Specify meson decay channel (pi0_decay, eta_decay, all). Default = pi0_decay.')
     bdnmc_group.add_option('--signal_channel', default = SIGNAL, help='Specify signal channel. Default = NCE_nucleon.')
-
+    
     parser.add_option_group(grid_group)
     parser.add_option_group(bdnmc_group)
     #parser.add_option_group(old_group)
@@ -99,17 +100,20 @@ def make_tarfile(output_filename, mass):
     os.listdir(".")
     tar = tarfile.open(output_filename, "w:gz")
     tar.add("parameter_uboone_grid.dat")
-    tar.add("mesons/pi0s.dat", arcname="pi0s.dat")
-    tar.add("mesons/etas.dat", arcname="etas.dat")
-    tar.add("BdNMC/bin/BDNMC")
-    for i in os.listdir("BdNMC/build"):
+    tar.add("./mesons/pi0s.dat", arcname="pi0s.dat")
+    tar.add("./mesons/etas.dat", arcname="etas.dat")
+    tar.add("./BdNMC/bin/BDNMC")
+    for i in os.listdir("./BdNMC/build"):
       tar.add("BdNMC/build/"+i)
-    for i in os.listdir("BdNMC/src"):
+    for i in os.listdir("./BdNMC/src"):
       tar.add("BdNMC/src/"+i)
     #tar.add("integral_fast.exe", arcname="integral_range.exe")
     #tar.add("xsec/cross_section_{}.root".format(mass), arcname="cross_section.root")
-    tar.add("evgen_training.exe", arcname="evgen_rootinput.exe")
-    tar.add("scripts/setup/setup_evgen_grid.sh", arcname="setup_evgen_grid.sh")
+
+    # Testing BdNMC first... 
+
+    #tar.add("evgen_training.exe", arcname="evgen_rootinput.exe")
+    tar.add("./grid/setup_evgen_grid.sh", arcname="setup_evgen_grid.sh")
     tar.close()
 
 
@@ -128,7 +132,7 @@ def main():
     DM_TYPE       = options.dm_type
 
     # Create a run number directory                                                                                                                                                                                                                                               
-    RUNDIR = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/run{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL)
+    RUNDIR = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/run_{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL)
     print(RUNDIR)
 
     if os.path.isdir(RUNDIR) == False:
@@ -136,21 +140,21 @@ def main():
         os.makedirs(RUNDIR)
 
     # Create a output file directory                                                                                                                                                                                                                                              
-    OUTDIR = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/run{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
+    OUTDIR = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/run_{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
 
     if os.path.isdir(OUTDIR) == False:
         print(OUTDIR, " directory doen't exist, so creating...\n")
         os.makedirs(OUTDIR)
 
     # Create a log file directory                                                                                                                                                                                                                                                 
-    LOGDIR = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/run{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/log/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
+    LOGDIR = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/run_{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/log/".format( USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
 
     if os.path.isdir(LOGDIR) == False:
         print(LOGDIR, " directory doen't exist, so creating...\n")
         os.makedirs(LOGDIR)
     
     # Create a cache file directory  
-    CACHE_PNFS_AREA = "/pnfs/uboone/scratch/users/{USER}/pawel_dm_gen/run{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/CACHE/".format(USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
+    CACHE_PNFS_AREA = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/run_{RUN_NUMBER}/{sig}/{mA}/{DECAY_CHAN}/{dm}/CACHE/".format(USER = os.getenv("USER"), DECAY_CHAN = decay_channel, mA = MA_DIR, RUN_NUMBER = options.run_number, sig = SIGNAL, dm=DM_TYPE)
 
     if os.path.isdir(CACHE_PNFS_AREA) == False:
       print(CACHE_PNFS_AREA, " directory doen't exist, so creating...\n")
@@ -166,7 +170,7 @@ def main():
 
     #always copy jobfile and tarball to cache area
     shutil.copy(TARFILE_NAME,    cache_folder)
-    shutil.copy("/uboone/app/users/anavrera/pawel_dark_tridents/grid/dark_tridents_poms.sh", cache_folder)
+    shutil.copy("./grid/dark_tridents_job.sh", cache_folder)
 
     print("\nTarball of local area:", cache_folder + TARFILE_NAME)
 
@@ -184,7 +188,7 @@ def main():
       "-e NEVTS={NEVTS} "
       "-f {TARFILE} "
       "-L {LOGFILE} "
-      "file://{CACHE}/dark_tridents_poms.sh".format(
+      "file://{CACHE}/dark_tridents_job.sh".format(
       GRID       = ("--OS=SL7 -g "
                     "--resource-provides=usage_model=DEDICATED,OPPORTUNISTIC,OFFSITE "
                     "--role=Analysis "
