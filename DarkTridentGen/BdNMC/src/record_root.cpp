@@ -132,7 +132,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
                 vt  = it->end_coords[3];
 
                 L1        = it->crossing[0];
-                L2        = it->crossing[0];
+                L2        = it->crossing[1];
                 L         = det->Ldet(*it);
 
                 dm_found = true;
@@ -161,7 +161,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
                 vt_other     = it->end_coords[3];
 
                 L1_other     = it->crossing[0];
-                L2_other     = it->crossing[0];
+                L2_other     = it->crossing[1];
                 L_other      = det->Ldet(*it);
             }
 
