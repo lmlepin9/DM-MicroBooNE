@@ -175,31 +175,69 @@ double brV_to_dm_dm(double mv, double mx, double kappa, double alphaD){
     return GammaV_to_dm_dm(mv, mx, kappa, alphaD)/GammaV(mv, mx, kappa, alphaD);
 }
 
-double d2brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta){
-    return sqrt(1-4*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+// Relevant for dark tridents 
+
+double d2brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta, std::string dm_type){
+    double d2br = 0; 
+    
+    if(dm_type=="scalar"){
+        d2br = sqrt(1-4*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+
+    else if(dm_type=="fermion"){
+        d2br =4*sqrt(1.0-4.0*mx*mx/s)*(pow(pow(mpi0,2)-s,3)*(s+2.0*mx*mx)*alphaD*pow(kappa,2))*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return d2br; 
 }
 
-double dbrpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s){
-    return sqrt(1.0-4.0*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double dbrpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, std::string dm_type){
+    double dbr = 0;
+
+    if(dm_type=="scalar"){
+        dbr=sqrt(1.0-4.0*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+
+    else if(dm_type=="fermion"){
+        dbr = 4*alphaD*sqrt(1.0-4.0*mx*mx/s)*pow(kappa,2)*pow(pow(mpi0,2)-s,3)*(s+2.0*mx*mx)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+    return dbr;
 }
 
-double brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD){
+double brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, std::string dm_type){
     using namespace std::placeholders;
-    auto dbr = std::bind(dbrpi0_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1);
+    auto dbr = std::bind(dbrpi0_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1,dm_type);
     return DoubleExponential_adapt(dbr,4*mx*mx,pow(mpi0,2),100,0.1,1e-4);
 }
 
-double d2breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta){
-    return bretato2gamma/brpi0to2gamma*sqrt(1-4*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double d2breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta, std::string dm_type){
+    double d2breta = 0;
+    if(dm_type == "scalar"){
+        d2breta = bretato2gamma/brpi0to2gamma*sqrt(1-4*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    else if(dm_type == "fermion"){
+        d2breta = bretato2gamma/brpi0to2gamma*sqrt(1-2.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s+2*mx*mx)*4*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return d2breta;
 }
 
-double dbreta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s){
-    return bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double dbreta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, std::string dm_type){
+    double dbreta=0;
+    if(dm_type == "scalar"){
+        dbreta = bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    else if(dm_type == "fermion"){
+        dbreta = bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s+2.0*mx*mx)*4*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return dbreta;
 }
 
-double breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD){
+double breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, std::string dm_type){
     using namespace std::placeholders;
-    auto dbr = std::bind(dbreta_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1);
+    auto dbr = std::bind(dbreta_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1, dm_type);
 	return DoubleExponential_adapt(dbr,4*mx*mx,pow(meta,2),100,0.1,1e-4);
 }
 

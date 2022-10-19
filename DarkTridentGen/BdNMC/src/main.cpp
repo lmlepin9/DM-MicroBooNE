@@ -207,13 +207,14 @@ int main(int argc, char* argv[]){
   double alD = par->alD();
   double mv = par->MassDP();
   double mdm = par->MassDM();	
+  std::string decay_type = par->Decay_Type(); // Type of dark matter (scalar/fermion)
 
   cout << "Model parameters" <<endl;
   cout << "alD " << alD << endl;
   cout << "epsilon " << kappa << endl;
   cout << "mA' " << mv << endl;
   cout << "mDM " << mdm << endl;
-  //cout << "DM type " << decay_type << endl;
+  cout << "DM type " << decay_type << endl;
 
 
   record_model(model_tree, alD, kappa, mdm, mv);
@@ -371,7 +372,7 @@ int main(int argc, char* argv[]){
       }
       PartDist->set_mass(mpi0);
       if(prodchoice=="pi0_decay"){
-        DMGen = std::shared_ptr<DMGenerator>(new pion_decay_gen(mv, mdm, kappa, alD));
+        DMGen = std::shared_ptr<DMGenerator>(new pion_decay_gen(mv, mdm, kappa, alD, decay_type));
       }
       else{
         DMGen = std::shared_ptr<DMGenerator>(new pion_decay_gen_baryonic(mv, mdm, kappa, alD));
@@ -391,7 +392,7 @@ int main(int argc, char* argv[]){
       PartDist->set_mass(meta);
 
       if(prodchoice=="eta_decay"){ 
-        DMGen = std::shared_ptr<DMGenerator>(new eta_decay_gen(mv, mdm, kappa, alD));
+        DMGen = std::shared_ptr<DMGenerator>(new eta_decay_gen(mv, mdm, kappa, alD, decay_type));
       }
       else{
         DMGen = std::shared_ptr<DMGenerator>(new eta_decay_gen_baryonic(mv, mdm, kappa, alD));
@@ -843,7 +844,7 @@ int main(int argc, char* argv[]){
 
       else if(scatter_switch)
         ++nevent;
-        if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
+        //if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
 
     } 
   }

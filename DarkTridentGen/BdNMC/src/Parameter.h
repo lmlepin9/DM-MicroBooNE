@@ -65,6 +65,7 @@ class Parameter{
         double Epsilon(){return epsilon;}
         double alD(){return alpha_D;}
         std::string Model_Name(){return model_name;}
+		std::string Decay_Type(){return decay_type;}
 
 
 		double Beam_Energy(){return beam_energy;}
@@ -158,6 +159,7 @@ class Parameter{
         double mass_V;
         double epsilon;
         double alpha_D;
+		std::string decay_type; 
         double POT;
         double pi0ratio;
 		int samplesize;

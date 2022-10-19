@@ -618,6 +618,7 @@ void Parameter::Set_Model_Parameters(map<string, string> &keymap){
     Set_Double(Vkey, mass_V, keymap);
     Set_Double(epskey, epsilon, keymap);
     Set_Double(alkey, alpha_D, keymap);
+    Set_String(decaykey,decay_type,keymap,"");
 }
 
 bool Parameter::Query_Map(const string key, double& val){

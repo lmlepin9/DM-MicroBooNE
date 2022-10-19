@@ -19,8 +19,8 @@ using std::cerr;
 using std::endl;
 const int BURN_MAX = 1000;
 
-pion_decay_gen::pion_decay_gen(double MV, double MX, double kap, double alp){
-    set_model_params(MV, MX, kap, alp);
+pion_decay_gen::pion_decay_gen(double MV, double MX, double kap, double alp, std::string decay_type){
+    set_model_params_dp(MV, MX, kap, alp, decay_type);
     chan_name="pi0_decay";
 }
 
@@ -37,7 +37,7 @@ void pion_decay_gen::Evaluate_Branching_Ratio(){
 		throw std::domain_error("mx>mpi0/2, out of domain"); 
     }
 
-    branchingratio = brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD);
+    branchingratio = brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD, dmtype);
     pmax = 0;//resetting pmax to zero, as new model parameters have been chosen.
     
     if(branchingratio<brpi0toVgamma(mv,mx,kappa,alphaD)*brV_to_dm_dm(mv, mx, kappa, alphaD))
@@ -46,7 +46,7 @@ void pion_decay_gen::Evaluate_Branching_Ratio(){
     if(branchingratio>brpi0toVgamma(mv,mx,kappa,alphaD)*brV_to_dm_dm(mv, mx, kappa, alphaD)*1.30){
                 OFF_SHELL=true;
         if(mv*mv<=mpi0*mpi0 && mv*mv >= 4*mx*mx)
-            pmax =  d2brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD, mv*mv, pi/2);
+            pmax =  d2brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD, mv*mv, pi/2, dmtype);
 		else
         	burn_in(BURN_MAX);//skip if on shell available?
     }
@@ -59,7 +59,7 @@ void pion_decay_gen::sample_dist(double& s, double& theta){
         s = Random::Flat(4*mx*mx,pow(mpi0,2));
         theta = Random::Flat(0,pi);
 		double hold;
-        if((hold=d2brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD, s, theta))>pmax*Random::Flat(0,1)){
+        if((hold=d2brpi0_to_gamma_dm_dm(mv, mx, kappa, alphaD, s, theta, dmtype))>pmax*Random::Flat(0,1)){
             if(hold>pmax)
                 pmax = hold;
             break;    
@@ -117,8 +117,8 @@ bool pion_decay_gen::GenDM(std::list<Particle>& vec, std::function<double(Partic
  *
  */
 
-eta_decay_gen::eta_decay_gen(double MV, double MX, double kap, double alp){
-    set_model_params(MV, MX, kap, alp);
+eta_decay_gen::eta_decay_gen(double MV, double MX, double kap, double alp, std::string decay_type){
+    set_model_params_dp(MV, MX, kap, alp, decay_type);
     chan_name="eta_decay";
 }
 
@@ -137,7 +137,7 @@ void eta_decay_gen::Evaluate_Branching_Ratio(){
            
     }
     
-    branchingratio = breta_to_gamma_dm_dm(mv, mx, kappa, alphaD);
+    branchingratio = breta_to_gamma_dm_dm(mv, mx, kappa, alphaD, dmtype);
     //cout << branchingratio << endl;
 	double onshellbr = bretatoVgamma(mv,mx,kappa,alphaD)*brV_to_dm_dm(mv, mx, kappa, alphaD);
     //cout << onshellbr << endl;
@@ -149,7 +149,7 @@ void eta_decay_gen::Evaluate_Branching_Ratio(){
     if(branchingratio>(onshellbr*1.30)){
         OFF_SHELL=true;
         if(mv<=meta && mv > 2*mx)
-            pmax =  d2breta_to_gamma_dm_dm(mv, mx, kappa, alphaD, mv*mv, pi/2);
+            pmax =  d2breta_to_gamma_dm_dm(mv, mx, kappa, alphaD, mv*mv, pi/2, dmtype);
         burn_in(BURN_MAX);//skip if on-shell available?
     }
     else
@@ -161,7 +161,7 @@ void eta_decay_gen::sample_dist(double& s, double& theta){
         s = Random::Flat(4*mx*mx,pow(meta,2));
         theta = Random::Flat(0,pi);
         double hold;
-		if((hold=d2breta_to_gamma_dm_dm(mv, mx, kappa, alphaD, s, theta))>pmax*Random::Flat(0,1)){
+		if((hold=d2breta_to_gamma_dm_dm(mv, mx, kappa, alphaD, s, theta, dmtype))>pmax*Random::Flat(0,1)){
             if(hold>pmax)
                 pmax = hold;
             break;    

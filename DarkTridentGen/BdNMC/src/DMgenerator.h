@@ -16,6 +16,7 @@ class DMGenerator{
         void Set_Channel_Name(std::string ch_na){chan_name=ch_na;}
         std::string Channel_Name(){return chan_name;}
         void set_model_params(double MV, double MX, double kap, double alp){mv=MV; mx=MX; kappa=kap; alphaD=alp; Evaluate_Branching_Ratio();}
+        void set_model_params_dp(double MV, double MX, double kap, double alp, std::string decay_type){mv=MV; mx=MX; kappa=kap; alphaD=alp; dmtype=decay_type; Evaluate_Branching_Ratio();}
         bool query_off_shell(){return OFF_SHELL;}
         void set_ntrials(int n_trials){ntrials = n_trials;}
         int NTrials(){return ntrials;}
@@ -24,7 +25,7 @@ class DMGenerator{
         virtual void Evaluate_Branching_Ratio() {};
         double mv, mx, kappa, alphaD;
         bool OFF_SHELL = false;
-        std::string chan_name;
+        std::string chan_name, dmtype;
         double branchingratio;
         double pmax;
         int ntrials;
@@ -32,7 +33,7 @@ class DMGenerator{
 
 class pion_decay_gen: public DMGenerator{
     public:
-        pion_decay_gen(double MV, double MX, double kap, double alp);
+        pion_decay_gen(double MV, double MX, double kap, double alp, std::string type);
         ~pion_decay_gen(){};
         bool GenDM(std::list<Particle>& vec, std::function<double(Particle&)> det_int, Particle& part);
         void sample_dist(double& s, double& theta);
@@ -43,7 +44,7 @@ class pion_decay_gen: public DMGenerator{
 
 class eta_decay_gen: public DMGenerator{
     public:
-        eta_decay_gen(double MV, double MX, double kap, double alp);
+        eta_decay_gen(double MV, double MX, double kap, double alp, std::string type);
         ~eta_decay_gen(){};
         bool GenDM(std::list<Particle>& vec, std::function<double(Particle&)> det_int, Particle& part);
         void sample_dist(double& s, double& theta);

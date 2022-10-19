@@ -34,19 +34,23 @@ const string pos_offset_key = "position_offset";
 
 const string detkey = "detector";
 
+// MODEL PARAMETERS
 const string modelkey = "model";
-
 const string dmkey = "dark_matter_mass";
 const string Vkey = "dark_photon_mass";
 const string epskey = "epsilon";
 const string alkey = "alpha_D";
 const string signalkey = "signal_channel";
+const string decaykey = "decay_type";
+
+
 const string coherent_key = "coherent";
 const string outkey = "output_file";
 const string sumkey = "summary_file";
 const string rootkey = "root_file";
 
-const string output_mode_key = "output_mode"; const string out_mode_def = "comprehensive";
+const string output_mode_key = "output_mode"; 
+const string out_mode_def = "comprehensive";
 const string efficiency_key = "efficiency";
 const string POTkey = "POT";
 const string pi0_ratio_key = "pi0_per_POT";
