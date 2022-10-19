@@ -833,13 +833,16 @@ int main(int argc, char* argv[]){
         Record_Particles(*comprehensive_out, vec);
         *comprehensive_out << "endevent " << nevent << endl << endl;    
       }
-
+      /// MAYBE THE BUG FOR TEXT OUTPUT IS HERE????? 
       else if(scatter_switch && outmode=="dm_dist_root"){
 
         ++nevent;
         if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
 
       }
+
+      else if(scatter_switch)
+        ++nevent;
 
     } 
   }
