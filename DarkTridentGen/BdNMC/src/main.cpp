@@ -843,6 +843,7 @@ int main(int argc, char* argv[]){
 
       else if(scatter_switch)
         ++nevent;
+        if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
 
     } 
   }
