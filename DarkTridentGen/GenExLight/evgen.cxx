@@ -338,8 +338,6 @@ Double_t TDensity::Density(int nDim, Double_t *Xarg)
 };
 
 
-
-
 TFoam* init_foam(const double ene) {
 
   Int_t  kDim   =     3*Nop-4;   // total dimension
@@ -349,7 +347,7 @@ TFoam* init_foam(const double ene) {
   Int_t  OptRej   =       1;   // Wted events for OptRej=0; wt=1 for OptRej=1 (default)
   Int_t  OptDrive =       2;   // (D=2) Option, type of Drive =0,1,2 for TrueVol,Sigma,WtMax
   Int_t  EvPerBin =      25;   // Maximum events (equiv.) per bin in buid-up
-  Int_t  Chat     =       0;   // Chat level
+  Int_t  Chat     =       1;   // Chat level
   //=========================================================
   TRandom *PseRan   = new TRandom3();  // Create random number generator
   TFoam *foam    = new TFoam("FoamX");   // Create Simulator
@@ -383,7 +381,7 @@ TFoam* init_foam(const double ene) {
 map<int,TFoam*> foams;
 
 TFoam *cachefoam = 0;
-double cacheene, cachemv, cachemx;
+double cacheene, cachemv, cachemx, cachedecay;
 TChain *cachet = 0;
 TTree *newcachet = 0;
 TFile *newcachef = 0;
@@ -391,21 +389,23 @@ map<double,map<double,map<int,int>>> cachemap;
 
 TFoam *get_foam(const double ene, const string& cachedir) {
   int mev = (int)(ene*1000.+1e-4);
-  if(foams.find(mev) != foams.end()) {
+  /*if(foams.find(mev) != foams.end()) {
     return foams[mev];
-  }
+  }*/
   TFoam *foam;
-  if(!cachet) {
+  /*if(!cachet) {
     cachet = new TChain("foam");
     cachet->Add(Form("%s/*root",cachedir.c_str()));
     cachet->SetBranchStatus("*",0);
     cachet->SetBranchStatus("ene",1);
     cachet->SetBranchStatus("mV",1);
     cachet->SetBranchStatus("mX",1);
-    double cacheene, mx, mv;
+    cachet->SetBranchStatus("decay",1);
+    double cacheene, mx, mv, decay;
     cachet->SetBranchAddress("ene",&cacheene);
     cachet->SetBranchAddress("mX",&mx);
     cachet->SetBranchAddress("mV",&mv);
+    cachet->SetBranchAddress("decay",&decay);
     for(int i = 0; i < cachet->GetEntries(); ++i) {
       cachet->GetEntry(i);
       int mev = (int)(cacheene*1000.+1e-4);
@@ -432,9 +432,6 @@ TFoam *get_foam(const double ene, const string& cachedir) {
     foams[mev] = foam;
     return foam;
   }
-
-
-
   if(!newcachet) {
     UChar_t uuid[16];
     TUUID u;
@@ -444,22 +441,24 @@ TFoam *get_foam(const double ene, const string& cachedir) {
     newcachet = new TTree("foam","foam");
     newcachet->Branch("foam",&cachefoam);
     newcachet->Branch("ene",&cacheene);
+    newcachet->Branch("decay",&cachedecay);
     newcachet->Branch("mX",&cachemx);
     newcachet->Branch("mV",&cachemv);
-  }
+  }*/
 
   foam = init_foam((0.001*mev>mX+mV)?0.001*(mev+0.5):0.5*(0.001*(mev+1)+mX+mV));
-  cachefoam = foam;
-  cacheene = ene;
-  cachemx = mX;
-  cachemv = mV;
-  newcachet->Fill();
-  newcachet->AutoSave();
+  //cachefoam = foam;
+  //cacheene = ene;
+  //cachemx = mX;
+  //cachemv = mV;
+  //newcachet->Fill();
+  //newcachet->AutoSave();
   //cachemap[mX][mV][mev] = -1-newcachet->GetEntries();
 
   foams[mev] = foam;
   return foam;
 }
+
 
 TGenPhaseSpace *_vdecay = 0;
 
@@ -492,6 +491,7 @@ void generate_interaction(const double ene, const TVector3& mom,
 
 
 
+ /*
 TGraph* get_xsec(const string& dir) {
   TChain t("xsec");
   t.Add(Form("%s/events_*MeV.root",dir.c_str()));
@@ -509,14 +509,14 @@ TGraph* get_xsec(const string& dir) {
   TGraph *g = new TGraph(n,px.data(),py.data()); g->SetName("ggg");
   g->SetBit(TGraph::kIsSortedX);
   return g;
-}
+}  */ 
 
-/*
+
 TGraph* get_xsec(const string& file) {
   TFile *f  = TFile::Open(file.c_str());
   TGraph *g = (TGraph *)f->Get("gxsec");
   return g;
-}*/ 
+}
 
 
 int main(int argc, char** argv)
@@ -535,7 +535,7 @@ int main(int argc, char** argv)
   int seed = -1;
 
   char c;
-  while((c = getopt(argc, argv, "i:x:c:o:s:m:t")) != -1) {
+  while((c = getopt(argc, argv, "i:x:c:o:s:m:t:")) != -1) {
     switch(c) {
       case 'i':
         infn = optarg; // input files
