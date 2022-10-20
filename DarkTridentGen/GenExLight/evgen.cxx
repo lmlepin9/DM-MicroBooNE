@@ -104,12 +104,11 @@ const double alpha_D = 0.1;
 const double alpha = 1./137.;
 const double mX = 0.03;
 const double mV = 0.05;
-
 const double ee = TMath::Sqrt(4.*TMath::Pi()*alpha);
 const double gp = TMath::Sqrt(4.*TMath::Pi()*alpha_D);
-
 const double gc11 = gp; 
 const double gc8 = 18.*ee*eps; // 18*ee*eps
+string dm_type;
 
 
 double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVector& pX2, const TLorentzVector& pN2, const TLorentzVector& pV) {
@@ -117,7 +116,11 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
 
 
   const double MAp2 = pV.Mag2();
+  const double MAp4 = std::pow(MAp2,2);
+  const double MAp6 = std::pow(MAp2,3);
+  const double MAp8 = std::pow(MAp2,4);
   const double Mchi2 = pX.Mag2();
+  const double MSChi2 = Mchi2;
   const double MNucAr2 = pN.Mag2();
 
   const double spVX2 = pV.Dot(pX2);
@@ -127,6 +130,16 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
   const double spSV = pN.Dot(pV);
   const double spSX = pN.Dot(pX);
 
+  const double spSX2_2 = std::pow(spSX2,2);
+  const double spSV_2 = std::pow(spSV,2);
+  const double spVX2_2 = std::pow(spVX2,2);
+  const double spVX_2 = std::pow(spVX,2);
+  const double spSX_2 = std::pow(spSX,2);
+
+  const double spSX_spSX2_2 = std::pow(spSX + spSX2,2);
+  const double spSV_spSX_spSX2_2 = std::pow(spSV + spSX + spSX2,2);
+  const double mspSV_spSX_spSX2_2 = std::pow(-spSV + spSX + spSX2,2);
+
   const double q2 = -((pN2-pN).Mag2());
   const double q = TMath::Sqrt(q2);
   const double invGeV_per_fm = 5.068;
@@ -135,12 +148,13 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
   const double a = 0.52 /* fm */ * invGeV_per_fm;
   const double s = 0.9 /* fm */ * invGeV_per_fm;
   const double R = TMath::Sqrt(c*c+7*TMath::Pi()*TMath::Pi()*a*a/3.-5.*s*s);
-  //const double FF = 3.*TMath::BesselJ1(q*R)/(q*R)*TMath::Exp(-q2*s*s/2.); // Cylindrical Bessel
   const double FF = 3. * std::sph_bessel(1, q*R)/(q*R)*TMath::Exp(-q2*s*s/2.); // Spherical Bessel function 
 
   using TMath::Power;
+  double m2; 
 
-  const double m2=FF*FF*(
+  if(dm_type == "scalar"){
+      m2=FF*FF*(
       -32*Power(gc11,4)*Power(gc8,2)*(
         Power(MAp2,3)*(Mchi2*MNucAr2 + spSX*spSX2)
         + MAp2*(
@@ -173,14 +187,26 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
         )
         )/(Power(MAp2 - 2*spVX,2)*Power(MAp2 + 2*spVX2,2)*Power(Mchi2 - spVX + spVX2 - spXX2,2));
 
-  //std::cout << "m2 = "<<m2<<" "<<FF<<" "<<q2;
-  //for(int i = 1; i <= 5; ++i) for(int j = i+1; j<=5; ++j) std::cout << "s["<<i<<","<<j<<"]="<<sij[i][j]<< " ";
-  //std::cout<<std::endl;
-  //pX.Print();
-  //pN.Print();
-  //pX2.Print();
-  //pN2.Print();
-  //pV.Print();
+  }
+
+  else if(dm_type == "fermion"){
+    m2=  FF*FF*
+  					(-4*std::pow(gc11,4)*std::pow(gc8,2))*
+					(MAp8*MNucAr2
+           				- MAp6*(spSV_2 + 2*spSV*(-spSX + spSX2) + 2*spSX_spSX2_2 + 4*MNucAr2*(spVX - spVX2))
+           				+ 4*MSChi2*(spSV_spSX_spSX2_2*spVX_2 + mspSV_spSX_spSX2_2*spVX2_2)
+           				+ 2*MAp4*(MSChi2*(spSV_2 + spSX_spSX2_2) + 2*spVX*((spSX + spSX2)*(spSX + 2*spSX2) + MNucAr2*spVX) - 2*((spSX + spSX2)*(2*spSX + spSX2) + 4*MNucAr2*spVX)*spVX2 + 2*MNucAr2*spVX2_2 - spSV*(spSX\
+						*spVX - 5*spSX2*spVX - 5*spSX*spVX2 + spSX2*spVX2) + spSV_2*(spVX - spVX2 - spXX2) + spSX_spSX2_2*spXX2)
+           				+ 8*spVX*spVX2*(-2*spSX2*(spSV + spSX + spSX2)*spVX + 2*(spSX*(-spSV + spSX + spSX2) + MNucAr2*spVX)*spVX2 + (spSV - spSX - spSX2)*(spSV + spSX + spSX2)*spXX2)
+           				- MAp2*(spSX_2*spVX_2 + 10*spSX*spSX2*spVX_2 + 9*spSX2_2*spVX_2 - 14*spSX_2*spVX*spVX2
+               			- 28*spSX*spSX2*spVX*spVX2 - 14*spSX2_2*spVX*spVX2 - 16*MNucAr2*spVX_2*spVX2 + 9*spSX_2*spVX2_2 + 10*spSX*spSX2*spVX2_2
+               			+ spSX2_2*spVX2_2 + 16*MNucAr2*spVX*spVX2_2 + 4*MSChi2*(spSV_spSX_spSX2_2*spVX - mspSV_spSX_spSX2_2*spVX2)
+               			+ 2*spSV*((spSX + 5*spSX2)*spVX_2 + 8*(spSX - spSX2)*spVX*spVX2 - (5*spSX + spSX2)*spVX2_2) + spSV_2*(spVX - spVX2)*(spVX - spVX2 - 4*spXX2)
+               			+ 4*spSX_spSX2_2*(spVX - spVX2)*spXX2)
+					)/(Power(MAp2 - 2*spVX,2)*Power(MAp2 + 2*spVX2,2)*Power(Mchi2 - spVX + spVX2 - spXX2,2));
+
+  }
+
   return m2;
 }
 
@@ -201,8 +227,8 @@ class TDensity: public TFoamIntegrand
 
     ///weight of the event
     Double_t eventWeight;
-
     Double_t ene;
+
 
   public:
 
@@ -503,11 +529,13 @@ int main(int argc, char** argv)
   string outf = "";
   string outn = "";
   string inputmode = "txt"; // Default input mode: txt 
+  string dm = "scalar"; // 
+
 
   int seed = -1;
 
   char c;
-  while((c = getopt(argc, argv, "i:x:c:o:s:m:")) != -1) {
+  while((c = getopt(argc, argv, "i:x:c:o:s:m:t")) != -1) {
     switch(c) {
       case 'i':
         infn = optarg; // input files
@@ -527,12 +555,17 @@ int main(int argc, char** argv)
       case 'm':
         inputmode = optarg; // input mode (root or text)
         break;
+      case 't':
+        dm = optarg; 
       default:
         break;
     }
   }
 
+  dm_type = dm;
 
+  cout << "Dark matter type: " << dm_type << endl; 
+  
   if(infn.empty()||xsecdir.empty()) {
     cerr << "Need to supply input file " << endl;
     return -1;
