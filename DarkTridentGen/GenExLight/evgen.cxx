@@ -502,29 +502,30 @@ int main(int argc, char** argv)
   string cachedir = "cache";
   string outf = "";
   string outn = "";
+  string inputmode = "txt"; // Default input mode: txt 
 
   int seed = -1;
 
   char c;
-  while((c = getopt(argc, argv, "i:x:c:o:s:n:")) != -1) {
+  while((c = getopt(argc, argv, "i:x:c:o:s:m:")) != -1) {
     switch(c) {
       case 'i':
-        infn = optarg;
+        infn = optarg; // input files
         break;
       case 'x':
-        xsecdir = optarg;
+        xsecdir = optarg; // xsec directory
         break;
       case 'c':
-        cachedir = optarg;
+        cachedir = optarg; // cache directory 
         break;
       case 'o':
-        outf = optarg;
+        outf = optarg;  // output file 
         break;
       case 's':
-        std::istringstream(optarg) >> seed;
+        std::istringstream(optarg) >> seed; // seed value 
         break;
-      case 'n':
-        outn = optarg;
+      case 'm':
+        inputmode = optarg; // input mode (root or text)
         break;
       default:
         break;
@@ -538,25 +539,53 @@ int main(int argc, char** argv)
   }
 
   TTree *intree = new TTree;
-  intree->ReadFile(infn.c_str(),"pi0/C:L/D:pname/C:w/D:E:px:py:pz:m:vx:vy:vz:vt:ex:ey:ez:et:L1:L2:id/L");
-  double ene, len, L1, px, py, pz, vx, vy, vz, vt, impwt;
+  double ene, len, L1, px, py, pz, vx, vy, vz, vt, impwt, maxE;
+  std::string* name=0;
   char decay_type[100];
   Long64_t origin_id;
-  intree->SetBranchAddress("E",&ene);
-  intree->SetBranchAddress("L",&len);
-  intree->SetBranchAddress("L1",&L1);
-  intree->SetBranchAddress("w",&impwt);
-  intree->SetBranchAddress("px",&px);
-  intree->SetBranchAddress("py",&py);
-  intree->SetBranchAddress("pz",&pz);
-  intree->SetBranchAddress("vx",&vx);
-  intree->SetBranchAddress("vy",&vy);
-  intree->SetBranchAddress("vz",&vz);
-  intree->SetBranchAddress("vt",&vt);
-  intree->SetBranchAddress("pi0",decay_type);
-  intree->SetBranchAddress("id",&origin_id);
-  double maxE = intree->GetMaximum("E");
-  //const double maxL = inttree->GetMaximum("L");
+  TTree *pot_tree = new TTree;
+  double tot_pot, pot_per_event;
+
+  if(inputmode=="txt"){
+    intree->ReadFile(infn.c_str(),"pi0/C:L/D:pname/C:w/D:E:px:py:pz:m:vx:vy:vz:vt:ex:ey:ez:et:L1:L2:id/L");
+    intree->SetBranchAddress("E",&ene);
+    intree->SetBranchAddress("L",&len);
+    intree->SetBranchAddress("L1",&L1);
+    intree->SetBranchAddress("w",&impwt);
+    intree->SetBranchAddress("px",&px);
+    intree->SetBranchAddress("py",&py);
+    intree->SetBranchAddress("pz",&pz);
+    intree->SetBranchAddress("vx",&vx);
+    intree->SetBranchAddress("vy",&vy);
+    intree->SetBranchAddress("vz",&vz);
+    intree->SetBranchAddress("vt",&vt);
+    intree->SetBranchAddress("pi0",decay_type);
+    intree->SetBranchAddress("id",&origin_id);
+    maxE = intree->GetMaximum("E");
+    //const double maxL = inttree->GetMaximum("L");
+
+  }
+
+  else if(inputmode=="root"){
+    TFile *fin = TFile::Open(infn.c_str());
+    intree = (TTree *) fin->Get("event_tree");
+    intree->SetBranchAddress("dm_energy",&ene);
+    intree->SetBranchAddress("dm_L",&len);
+    intree->SetBranchAddress("dm_L1",&L1);
+    intree->SetBranchAddress("dm_weight",&impwt);
+    intree->SetBranchAddress("dm_px",&px);
+    intree->SetBranchAddress("dm_py",&py);
+    intree->SetBranchAddress("dm_pz",&pz);
+    intree->SetBranchAddress("dm_origin_x",&vx);
+    intree->SetBranchAddress("dm_origin_y",&vy);
+    intree->SetBranchAddress("dm_origin_z",&vz);
+    intree->SetBranchAddress("dm_origin_t0",&vt);
+    intree->SetBranchAddress("channel_name", &name);
+    //intree->SetBranchAddress("id",&origin_id);
+    maxE = intree->GetMaximum("dm1_energy");
+    //const double maxL = inttree->GetMaximum("L");
+    pot_tree = (TTree *)fin->Get("pot_tree");
+  }
 
 
 
@@ -621,6 +650,8 @@ int main(int argc, char** argv)
   TFile *of = 0;
   TLorentzVector *inX, *vV, *outE, *outP, *intpos;
   TLorentzVector *inX_pr, *vV_pr, *outE_pr, *outP_pr, *intpos_pr;
+
+  /*
   if(!outf.empty()) {
     of = new TFile(outf.c_str(), "CREATE");
     ot = new TTree("events","events");
@@ -636,11 +667,11 @@ int main(int argc, char** argv)
     ot->Branch("vV_pr",&vV_pr);
     ot->Branch("outE_pr",&outP_pr);
     ot->Branch("outP_pr",&outE_pr);
-  }
+  }*/ 
 
   //outputFile.close();
-  char filename[150]="./test_hepevt.txt";
-  outputFile.open(filename);
+  cout << "output file name: " << outf << endl; 
+  outputFile.open(outf.c_str());
 
   for(int i = 0; i < intree->GetEntries(); ++i) {
     intree->GetEntry(i);
@@ -648,6 +679,10 @@ int main(int argc, char** argv)
     double thisW = impwt * xsec->Eval(ene) * len;
     if(r->Uniform() < thisW/maxW) {
       TVector3 xmom(px,py,pz);
+      cout << "Len and L1: " << len << " " << L1 << endl;
+      cout << "Origin: " << vx << " " << vy << " " << vz << endl;
+      cout << "Momentum: " << px << " " << py << " " << pz << endl;
+      cout << "\n" << endl;
       double lpos = r->Uniform() * len + L1;
       TVector3 orig(vx,vy,vz);
       const TVector3& dir = xmom.Unit();
@@ -701,6 +736,8 @@ int main(int argc, char** argv)
       cout << 1 << " " << 11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
 		 << eneg.X() <<" " << eneg.Y() << " " << eneg.Z() <<" " <<eneg.E() <<" "<< eneg.M()  <<" "
 		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
+
+     cout << "\n" << endl;
 
       outputFile << ievt << " " << 4 << " " << decay_type << " " << origin_id << endl;
       //    status      pdg         mother1     mother2     daugher1  daughter2
