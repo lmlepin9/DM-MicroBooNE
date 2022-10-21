@@ -11,6 +11,8 @@ const double g4numi_pot    = 5e5;
 double dm_weight, dm_energy, dm_px, dm_py, dm_pz, dm_origin_x, dm_origin_y, dm_origin_z, dm_origin_t0, vx, vy, vz, vt, L, L1, L2;
 double dm_weight_other, dm_energy_other, dm_px_other, dm_py_other, dm_pz_other, dm_origin_x_other, dm_origin_y_other, dm_origin_z_other, dm_origin_t0_other, vx_other, vy_other, vz_other, vt_other, L_other, L1_other, L2_other;
 int event_number;
+int dm_id;
+int dm_id_other;  
 
 //POT variables
 std::string channel_name, dm_mom;
@@ -25,7 +27,7 @@ TTree* make_event_tree(){
     TTree* outtree = new TTree("event_tree", "Tree containing paticles and their parameters");
 
     outtree->Branch("event_number", &event_number);
-
+    outtree->Branch("id", &dm_id);
     outtree->Branch("dm_energy", &dm_energy);
     outtree->Branch("dm_weight", &dm_weight);
     outtree->Branch("dm_px", &dm_px);
@@ -47,7 +49,7 @@ TTree* make_event_tree(){
     outtree->Branch("dm_L2", &L2);
 
 
-
+    outtree->Branch("dmOther_id",&dm_id_other);
     outtree->Branch("dmOther_energy", &dm_energy_other);
     outtree->Branch("dmOther_weight", &dm_weight_other);
     outtree->Branch("dmOther_px", &dm_px_other);
@@ -115,6 +117,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
 
             if(!isOther){
 
+                dm_id = it->origin_id; 
                 dm_weight = it->w;
                 dm_energy = it->E;
                 dm_px     = it->px;
@@ -143,7 +146,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
 
 
             else{
-
+                dm_id_other = it->origin_id;
                 dm_weight_other = it->w;
                 dm_energy_other = it->E;
                 dm_px_other     = it->px;
