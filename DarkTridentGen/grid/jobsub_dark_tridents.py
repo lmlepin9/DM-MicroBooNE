@@ -19,12 +19,12 @@ USER                  = os.getenv("USER")
 DO_TAR                = True
 MA_DIR                = 0.05 
 RATIO                 = 0.6                                                                                                                                                                                                                           
-NEVTS                 = 200
-N_JOBS                = 5
+NEVTS                 = 100
+N_JOBS                = 100
 ALD                   = 0.1
 DM_TYPE               = "scalar"
 DECAY_CHAN            = "all"
-RUN_NUMBER            = 20220727
+RUN_NUMBER            = 9
 SEED                  = 20220727
 SIGNAL                = "parameter_space"
 OUTDIR                = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/{DECAY_CHAN}/run_{RUN_NUMBER}/{mA}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
@@ -55,7 +55,7 @@ def get_options():
     bdnmc_group.add_option('--ratio', default = RATIO, type=float, help='Specify dark photon mass to dark matter mass ratio. Default = 0.6.')
     bdnmc_group.add_option('--nevts', default = NEVTS, type=int, help='Specify number of events to generate. Default = 5000.')
     bdnmc_group.add_option('--alD', default = ALD, help='Specify value of alD. Default = 0.1')
-    bdnmc_group.add_option('--dm_type', default = DM_TYPE, help='Specify value of alD. Default = 0.1')
+    bdnmc_group.add_option('--dm_type', default = DM_TYPE, help='Specify the dark matter type, default: scalar')
     bdnmc_group.add_option('--decay_channel', default = DECAY_CHAN, help='Specify meson decay channel (pi0_decay, eta_decay, all). Default = pi0_decay.')
     bdnmc_group.add_option('--signal_channel', default = SIGNAL, help='Specify signal channel. Default = NCE_nucleon.')
     
@@ -96,7 +96,7 @@ def make_parfile(options):
 
   return macro_name
 
-def make_tarfile(output_filename, mass):
+def make_tarfile(output_filename, mass,dm_type):
     os.listdir(".")
     tar = tarfile.open(output_filename, "w:gz")
     tar.add("parameter_uboone_grid.dat")
@@ -107,12 +107,8 @@ def make_tarfile(output_filename, mass):
       tar.add("BdNMC/build/"+i)
     for i in os.listdir("./BdNMC/src"):
       tar.add("BdNMC/src/"+i)
-    #tar.add("integral_fast.exe", arcname="integral_range.exe")
-    #tar.add("xsec/cross_section_{}.root".format(mass), arcname="cross_section.root")
-
-    # Testing BdNMC first... 
-
-    #tar.add("evgen_training.exe", arcname="evgen_rootinput.exe")
+    tar.add("xsec/cross_section_{}_{}.root".format(mass,dm_type), arcname="cross_section.root")
+    tar.add("./GenExLight/evgen.exe", arcname="evgen.exe")
     tar.add("./grid/setup_evgen_grid.sh", arcname="setup_evgen_grid.sh")
     tar.close()
 
@@ -166,7 +162,7 @@ def main():
 
     if(make_tar):
       print("\nTarring up local area...")
-      make_tarfile(TARFILE_NAME, options.mA)  
+      make_tarfile(TARFILE_NAME, options.mA, options.dm_type)  
 
     #always copy jobfile and tarball to cache area
     shutil.copy(TARFILE_NAME,    cache_folder)
