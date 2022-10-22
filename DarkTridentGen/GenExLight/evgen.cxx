@@ -109,6 +109,7 @@ const double gp = TMath::Sqrt(4.*TMath::Pi()*alpha_D);
 const double gc11 = gp; 
 const double gc8 = 18.*ee*eps; // 18*ee*eps
 string dm_type;
+double q2_out;
 
 
 double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVector& pX2, const TLorentzVector& pN2, const TLorentzVector& pV) {
@@ -141,6 +142,7 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
   const double mspSV_spSX_spSX2_2 = std::pow(-spSV + spSX + spSX2,2);
 
   const double q2 = -((pN2-pN).Mag2());
+  q2_out = -((pN2-pN).Mag2());
   const double q = TMath::Sqrt(q2);
   const double invGeV_per_fm = 5.068;
   const double A = 40.;
@@ -383,78 +385,14 @@ map<int,TFoam*> foams;
 TFoam *cachefoam = 0;
 double cacheene, cachemv, cachemx, cachedecay;
 TChain *cachet = 0;
-TTree *newcachet = 0;
-TFile *newcachef = 0;
+//TTree *newcachet = 0;
+//TFile *newcachef = 0;
 map<double,map<double,map<int,int>>> cachemap;
 
 TFoam *get_foam(const double ene, const string& cachedir) {
   int mev = (int)(ene*1000.+1e-4);
-  /*if(foams.find(mev) != foams.end()) {
-    return foams[mev];
-  }*/
   TFoam *foam;
-  /*if(!cachet) {
-    cachet = new TChain("foam");
-    cachet->Add(Form("%s/*root",cachedir.c_str()));
-    cachet->SetBranchStatus("*",0);
-    cachet->SetBranchStatus("ene",1);
-    cachet->SetBranchStatus("mV",1);
-    cachet->SetBranchStatus("mX",1);
-    cachet->SetBranchStatus("decay",1);
-    double cacheene, mx, mv, decay;
-    cachet->SetBranchAddress("ene",&cacheene);
-    cachet->SetBranchAddress("mX",&mx);
-    cachet->SetBranchAddress("mV",&mv);
-    cachet->SetBranchAddress("decay",&decay);
-    for(int i = 0; i < cachet->GetEntries(); ++i) {
-      cachet->GetEntry(i);
-      int mev = (int)(cacheene*1000.+1e-4);
-      cachemap[mx][mv][mev]=i;
-    }
-    //cachet->SetBranchStatus("foam",1);
-    delete cachet;
-    cachet = new TChain("foam");
-    cachet->Add(Form("%s/*root",cachedir.c_str()));
-  }
-  if(cachemap[mX][mV].find(mev) != cachemap[mX][mV].end()) {
-    int entry = cachemap[mX][mV][mev];
-    if(entry < 0 || entry >= cachet->GetEntries()) {
-      cerr << "We should not be here!" << endl;
-      return 0;
-    }
-    cachefoam = 0;
-    cachet->SetBranchAddress("foam",&cachefoam);
-    cachet->GetEntry(entry);
-    foam = new TFoam;
-    *foam = *cachefoam;
-    TDensity    *rho= new TDensity((0.001*mev>mX+mV)?0.001*(mev+0.5):0.5*(0.001*(mev+1)+mX+mV));
-    foam->SetRho(rho);
-    foams[mev] = foam;
-    return foam;
-  }
-  if(!newcachet) {
-    UChar_t uuid[16];
-    TUUID u;
-    u.GetUUID(uuid);
-    string fname = Form("%s/cache_%u.root",cachedir.c_str(),*((unsigned int*)(uuid+8)));
-    newcachef = new TFile(fname.c_str(),"recreate");
-    newcachet = new TTree("foam","foam");
-    newcachet->Branch("foam",&cachefoam);
-    newcachet->Branch("ene",&cacheene);
-    newcachet->Branch("decay",&cachedecay);
-    newcachet->Branch("mX",&cachemx);
-    newcachet->Branch("mV",&cachemv);
-  }*/
-
   foam = init_foam((0.001*mev>mX+mV)?0.001*(mev+0.5):0.5*(0.001*(mev+1)+mX+mV));
-  //cachefoam = foam;
-  //cacheene = ene;
-  //cachemx = mX;
-  //cachemv = mV;
-  //newcachet->Fill();
-  //newcachet->AutoSave();
-  //cachemap[mX][mV][mev] = -1-newcachet->GetEntries();
-
   foams[mev] = foam;
   return foam;
 }
@@ -574,8 +512,7 @@ int main(int argc, char** argv)
   TTree *intree = new TTree;
   double ene, len, L1, px, py, pz, vx, vy, vz, vt, impwt, maxE;
   std::string* name=0;
-  char decay_type[100];
-  Long64_t origin_id;
+  Int_t origin_id;
   TTree *pot_tree = new TTree;
   double tot_pot, pot_per_event;
 
@@ -592,7 +529,7 @@ int main(int argc, char** argv)
     intree->SetBranchAddress("vy",&vy);
     intree->SetBranchAddress("vz",&vz);
     intree->SetBranchAddress("vt",&vt);
-    intree->SetBranchAddress("pi0",decay_type);
+    intree->SetBranchAddress("pi0",&name);
     intree->SetBranchAddress("id",&origin_id);
     maxE = intree->GetMaximum("E");
     //const double maxL = inttree->GetMaximum("L");
@@ -614,13 +551,12 @@ int main(int argc, char** argv)
     intree->SetBranchAddress("dm_origin_z",&vz);
     intree->SetBranchAddress("dm_origin_t0",&vt);
     intree->SetBranchAddress("channel_name", &name);
-    //intree->SetBranchAddress("id",&origin_id);
+    intree->SetBranchAddress("id",&origin_id);
     maxE = intree->GetMaximum("dm1_energy");
     //const double maxL = inttree->GetMaximum("L");
     pot_tree = (TTree *)fin->Get("pot_tree");
+    //delete fin; 
   }
-
-
 
   TGraph *xsec = get_xsec(xsecdir);
   if(!xsec) {
@@ -656,7 +592,6 @@ int main(int argc, char** argv)
   const double mbm_to_cm3 = 1e-27 * 100.; // convert mb*m to cm3;
   const double interaction_weight = (maxW*invGeV2_to_mb*mbm_to_cm3)*density*avogadro/molar_mass;
   cout << "1 tree entry represents " << interaction_weight << " interactions" << endl;
-  cout << "Argument " << outn << endl;
   // translation and rotation from beamline coordinate system
   // to detector coordinate system
   const TVector3 det_centre(55.02, 72.59,  672.70);
@@ -679,32 +614,38 @@ int main(int argc, char** argv)
   TRandom3 *r = new TRandom3(seed);
   TRandom3 *r_timing = new TRandom3(0);
 
-  TTree *ot;
-  TFile *of = 0;
-  TLorentzVector *inX, *vV, *outE, *outP, *intpos;
-  TLorentzVector *inX_pr, *vV_pr, *outE_pr, *outP_pr, *intpos_pr;
 
-  /*
-  if(!outf.empty()) {
-    of = new TFile(outf.c_str(), "CREATE");
-    ot = new TTree("events","events");
+  bool root_option = true;
+  TFile *of;
+  TTree *ot;
+  TLorentzVector inX, vV, outE, outP, intpos;
+  TLorentzVector inX_pr, vV_pr, outE_pr, outP_pr, intpos_pr;
+  Double_t out_q2;
+  //Double_t out_pot; 
+
+
+  if(root_option) {
+    of = new TFile((outf+".root").c_str(), "RECREATE");
+    ot = new TTree("event_tree","Tree with events after evgen");
     ot->SetWeight(interaction_weight);
     ot->Branch("vtx",&intpos);
     ot->Branch("inX",&inX);
     ot->Branch("vV",&vV);
     ot->Branch("outE",&outP);
     ot->Branch("outP",&outE);
-    
     ot->Branch("vtx_pr",&intpos_pr);
     ot->Branch("inX_pr",&inX_pr);
     ot->Branch("vV_pr",&vV_pr);
     ot->Branch("outE_pr",&outP_pr);
     ot->Branch("outP_pr",&outE_pr);
-  }*/ 
+    ot->Branch("q2",&out_q2);
+    //ot->Branch("pot",&out_pot);
+  }
+
 
   //outputFile.close();
   cout << "output file name: " << outf << endl; 
-  outputFile.open(outf.c_str());
+  outputFile.open((outf+".txt").c_str());
 
   for(int i = 0; i < intree->GetEntries(); ++i) {
     intree->GetEntry(i);
@@ -714,7 +655,7 @@ int main(int argc, char** argv)
       TVector3 xmom(px,py,pz);
       cout << "Len and L1: " << len << " " << L1 << endl;
       cout << "Origin: " << vx << " " << vy << " " << vz << endl;
-      cout << "Momentum: " << px << " " << py << " " << pz << endl;
+      cout << "Momentum before scattering: " << px << " " << py << " " << pz << " " << ene << endl;
       cout << "\n" << endl;
       double lpos = r->Uniform() * len + L1;
       TVector3 orig(vx,vy,vz);
@@ -724,8 +665,10 @@ int main(int argc, char** argv)
       TLorentzVector dgam_pr, epos_pr, eneg_pr, vX_pr, vertex_pr;
       generate_interaction(ene, xmom, dgam, epos, eneg, cachedir);
 
+      cout <<"Transferred momentum to Ar q2: " << q2_out << endl;
+
       vt *= 1e9; // time is in s, needs to be in ns
-      if(of) {
+      if(root_option) {
         TLorentzVector vX(xmom.X(),xmom.Y(),xmom.Z(),ene);
         TLorentzVector vertex(vtx.X(),vtx.Y(),vtx.Z(),vt);
         vertex_pr = vertex;
@@ -733,6 +676,7 @@ int main(int argc, char** argv)
         dgam_pr = dgam;
         epos_pr = epos;
         eneg_pr = eneg;
+        out_q2 = q2_out; 
       }
       // transform all vectors into detector coordinate system
       vtx -= det_centre;
@@ -754,7 +698,7 @@ int main(int argc, char** argv)
       eneg *= det_rot;
       
 
-      cout << ievt << " " << 4 << " " << decay_type << " " << origin_id << endl;
+      cout << ievt << " " << 4 << " " << *name << " " << origin_id << endl;
 
        //    status      pdg         mother1     mother2     daugher1  daughter2
       cout << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
@@ -772,7 +716,7 @@ int main(int argc, char** argv)
 
      cout << "\n" << endl;
 
-      outputFile << ievt << " " << 4 << " " << decay_type << " " << origin_id << endl;
+      outputFile << ievt << " " << 4 << " " << *name << " " << origin_id << endl;
       //    status      pdg         mother1     mother2     daugher1  daughter2
       outputFile << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
 		 << xmom.X() <<" " << xmom.Y() << " " << xmom.Z() <<" " <<ene <<" "<< mX <<" "
@@ -789,37 +733,50 @@ int main(int argc, char** argv)
       ievt++;
 
 
-      if(of) {
+      if(root_option) {
         TLorentzVector vX(xmom.X(),xmom.Y(),xmom.Z(),ene);
         TLorentzVector vertex(vtx.X(),vtx.Y(),vtx.Z(),ivt);
-        intpos = &vertex;
-        inX = &vX;
-        vV = &dgam;
-        outE = &eneg;
-        outP = &epos;
-        
-        intpos_pr = &vertex_pr;
-        inX_pr = &vX_pr;
-        vV_pr = &dgam_pr;
-        outE_pr = &eneg_pr;
-        outP_pr = &epos_pr;
-        
+        intpos = vertex;
+        inX = vX;
+        vV = dgam;
+        outE = eneg;
+        outP = epos;
+        intpos_pr = vertex_pr;
+        inX_pr = vX_pr;
+        vV_pr = dgam_pr;
+        outE_pr = eneg_pr;
+        outP_pr = epos_pr;
         ot->Fill();
       }
     }
   }
-  cout << "Final number of events: " << ievt << endl;
-  outputFile.close();
-  if(of) {
-    of->cd();
-    ot->Write();
-    of->Close();
+
+  TVector3 pot_vec;
+  if(inputmode=="root"){
+   pot_tree->SetBranchAddress("tot_pot",&tot_pot);
+   pot_tree->GetEntry(0);
+   pot_per_event = tot_pot/ot->GetEntries();
+   outputFile << tot_pot << " " << pot_per_event << "\n";
+   outputFile.close();
+   TVector3 temp_pot_vec(tot_pot, pot_per_event,0);
+   pot_vec = temp_pot_vec;
+   ot->Fill();
   }
 
-  if(newcachef && newcachet) {
-    newcachef->cd();
-    newcachet->Write();
-    newcachef->Close();
-    delete newcachef;
+
+  else if(inputmode=="txt"){
+    cout << "Final number of events: " << ievt << endl;
+    outputFile.close();
   }
+ 
+  if(root_option) {
+    of->cd();
+    ot->Write();
+    pot_vec.Write();
+    of->Close();
+
+  }
+
+
+
 }
