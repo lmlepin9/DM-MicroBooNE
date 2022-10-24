@@ -19,17 +19,17 @@ USER                  = os.getenv("USER")
 DO_TAR                = True
 MA_DIR                = 0.05 
 RATIO                 = 0.6                                                                                                                                                                                                                           
-NEVTS                 = 100
+NEVTS                 = 1000
 N_JOBS                = 100
 ALD                   = 0.1
-DM_TYPE               = "scalar"
+DM_TYPE               = "fermion"
 DECAY_CHAN            = "all"
-RUN_NUMBER            = 9
+RUN_NUMBER            = 50
 SEED                  = 20220727
 SIGNAL                = "parameter_space"
 OUTDIR                = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/{DECAY_CHAN}/run_{RUN_NUMBER}/{mA}/files/".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
 LOGDIR                = "/pnfs/uboone/scratch/users/{USER}/DarkTridentGen/{DECAY_CHAN}/run_{RUN_NUMBER}/{mA}/log".format( USER = os.getenv("USER"), DECAY_CHAN = DECAY_CHAN, mA = MA_DIR, RUN_NUMBER = RUN_NUMBER)
-TEMPLATE              = "/pnfs/uboone/resilient/users/lmoralep/DarkTridentGen/template_parameter_uboone_root_all.dat"
+TEMPLATE              = "/uboone/app/users/lmoralep/DM-MicroBooNE/DarkTridentGen/BdNMC/template_parameter_uboone_root_all.dat"
 FILETAG               = ""
 TARFILE_NAME          = "local_install_dark_tridents.tar.gz"
 

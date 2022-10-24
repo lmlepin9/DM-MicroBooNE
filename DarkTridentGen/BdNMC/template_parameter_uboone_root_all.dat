@@ -15,7 +15,7 @@ dark_photon_mass $dp_mass
 alpha_D $alD
 
 # Testing the scalar channel first 
-#decay_type $decay_type
+decay_type ${decay_type}
 
 #Run parameters
 POT 2e21
@@ -69,7 +69,7 @@ signal_channel NCE_nucleon
 
 
 #Add this line to use coherent scattering rather than incoherent scattering.
-coherent true
+# coherent true
 
 
 ########
@@ -77,9 +77,13 @@ coherent true
 ########
 
 #Where to write events. 
-output_file ${outFile}
+# output_file ${outFile}
+# Where to write a summary of the run with number of events and paramaters in the format: channel_name V_mass DM_mass num_events epsilon alpha_prime scattering_channel 
 summary_file ${sumFile}
-output_mode dm_detector_distribution
+
+# output_mode dm_detector_distribution
+
+# ROOT output
 output_mode dm_dist_root
 root_file ${outroot} 
 
