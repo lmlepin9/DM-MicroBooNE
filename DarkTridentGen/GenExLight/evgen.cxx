@@ -60,6 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include <TLorentzVector.h>
 #include <TDatabasePDG.h>
 #include <TGraph.h>
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
 
 #include "TDecay.h"
 #include "TGenPhaseSpace.h"
@@ -457,6 +459,80 @@ TGraph* get_xsec(const string& file) {
 }
 
 
+
+void DumpHepevt(TTree *out_tree, string &file){
+  // Here we dump all the information in to a hepevt file, including POT per event. 
+  // TLorentzVector pointer should point to something, don't know why 
+  const double cm = 100.;
+  TLorentzVector *vtx = 0;
+  TLorentzVector *xmom = 0;
+  TLorentzVector *dgam = 0;
+  TLorentzVector *eneg = 0;
+  TLorentzVector *epos = 0;
+  TLorentzVector *orig = 0 ;
+  TLorentzVector *inX_pr = 0;
+  TLorentzVector *vV_pr = 0;
+  TLorentzVector *outE_pr = 0;
+  TLorentzVector *outP_pr = 0;
+  TLorentzVector *intpos_pr = 0;
+  Double_t out_q2, w, out_pot;
+  Int_t origin_id; 
+  std::string *name = 0;
+
+  out_tree->SetBranchAddress("evt_weight",&w);
+  out_tree->SetBranchAddress("vtx",&vtx);
+  out_tree->SetBranchAddress("inX",&xmom);
+  out_tree->SetBranchAddress("origin",&orig);
+  out_tree->SetBranchAddress("origin_id",&origin_id);
+  out_tree->SetBranchAddress("vV",&dgam);
+
+  // These two are swapped, for some reason...
+  out_tree->SetBranchAddress("outE",&epos);
+  out_tree->SetBranchAddress("outP",&eneg);
+
+  out_tree->SetBranchAddress("vtx_pr",&intpos_pr);
+  out_tree->SetBranchAddress("inX_pr",&inX_pr);
+  out_tree->SetBranchAddress("vV_pr",&vV_pr);
+  out_tree->SetBranchAddress("outE_pr",&outP_pr);
+  out_tree->SetBranchAddress("outP_pr",&outE_pr);
+  out_tree->SetBranchAddress("q2",&out_q2);
+  out_tree->SetBranchAddress("origin_name",&name);
+  out_tree->SetBranchAddress("total_pot",&out_pot);
+
+  ofstream outputFile;
+  cout << "Writing hepevt file: " << file + ".txt" << endl; 
+  outputFile.open((file+".txt").c_str());
+  Int_t n_entries = (Int_t) out_tree->GetEntries();
+  Double_t tree_weight = (Double_t) out_tree ->GetWeight(); 
+  cout << "Number of entries: " << n_entries << endl; 
+
+  for(Int_t ievt = 0; ievt < n_entries; ievt++){
+      out_tree->GetEntry(ievt);
+      outputFile << ievt << " " << 4 << " " << *name << " " << origin_id << " " << (out_pot/n_entries)/tree_weight << endl;
+       //    status      pdg         mother1     mother2     daugher1  daughter2
+      outputFile << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
+		 << xmom->X() <<" " << xmom->Y() << " " << xmom->Z() <<" " << xmom->T() <<" "<< xmom->M() <<" "
+		 << orig->X() * cm << " " << orig->Y() * cm << " " << orig->Z() * cm << " " << orig->T() <<endl;
+      outputFile << 2 << " " << 80 << " " << 1 << " " << 1 << " " << 3 <<" "<< 4 << " "
+		 << dgam->X() <<" " << dgam->Y() << " " << dgam->Z() <<" " <<dgam->E() <<" "<< dgam->M()  <<" "
+		 << vtx->X() * cm << " " << vtx->Y() * cm << " " << vtx->Z() * cm << " " << vtx->T() <<endl;
+      outputFile << 1 << " " << -11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
+		 << epos->X() <<" " << epos->Y() << " " << epos->Z() <<" " <<epos->E() <<" "<< epos->M()  <<" "
+		 << vtx->X() * cm << " " << vtx->Y() * cm << " " << vtx->Z() * cm << " " << vtx->T() <<endl;
+      outputFile << 1 << " " << 11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
+		 << eneg->X() <<" " << eneg->Y() << " " << eneg->Z() <<" " <<eneg->E() <<" "<< eneg->M()  <<" "
+		 << vtx->X() * cm << " " << vtx->Y() * cm << " " << vtx->Z() * cm << " " << vtx->T() <<endl;
+
+  }
+  outputFile.close();
+
+}
+
+
+
+
+
+
 int main(int argc, char** argv)
 {
 
@@ -553,8 +629,9 @@ int main(int argc, char** argv)
     intree->SetBranchAddress("channel_name", &name);
     intree->SetBranchAddress("id",&origin_id);
     maxE = intree->GetMaximum("dm1_energy");
-    //const double maxL = inttree->GetMaximum("L");
     pot_tree = (TTree *)fin->Get("pot_tree");
+    pot_tree->SetBranchAddress("tot_pot",&tot_pot);
+    pot_tree->GetEntry(0);
     //delete fin; 
   }
 
@@ -608,8 +685,9 @@ int main(int argc, char** argv)
   _vdecay = new TGenPhaseSpace;
 
   int ievt = 0;
-  ofstream outputFile;
-  int file_index = 0 ;
+  
+  // Moved to external function 
+  //ofstream outputFile;
 
   TRandom3 *r = new TRandom3(seed);
   TRandom3 *r_timing = new TRandom3(0);
@@ -618,9 +696,11 @@ int main(int argc, char** argv)
   bool root_option = true;
   TFile *of;
   TTree *ot;
-  TLorentzVector inX, vV, outE, outP, intpos;
+  TLorentzVector inX, vV, outE, outP, intpos, origin;
   TLorentzVector inX_pr, vV_pr, outE_pr, outP_pr, intpos_pr;
-  Double_t out_q2;
+  Int_t org_id;
+  Double_t out_q2, weight, out_pot;
+  std::string *name_out = 0;
   //Double_t out_pot; 
 
 
@@ -628,6 +708,9 @@ int main(int argc, char** argv)
     of = new TFile((outf+".root").c_str(), "RECREATE");
     ot = new TTree("event_tree","Tree with events after evgen");
     ot->SetWeight(interaction_weight);
+    ot->Branch("evt_weight",&weight);
+    ot->Branch("origin_id",&org_id);
+    ot->Branch("origin",&origin);
     ot->Branch("vtx",&intpos);
     ot->Branch("inX",&inX);
     ot->Branch("vV",&vV);
@@ -639,13 +722,14 @@ int main(int argc, char** argv)
     ot->Branch("outE_pr",&outP_pr);
     ot->Branch("outP_pr",&outE_pr);
     ot->Branch("q2",&out_q2);
-    //ot->Branch("pot",&out_pot);
+    ot->Branch("origin_name", &name_out);
+    ot->Branch("total_pot",&out_pot);
   }
 
 
   //outputFile.close();
   cout << "output file name: " << outf << endl; 
-  outputFile.open((outf+".txt").c_str());
+  //outputFile.open((outf+".txt").c_str());
 
   for(int i = 0; i < intree->GetEntries(); ++i) {
     intree->GetEntry(i);
@@ -656,6 +740,7 @@ int main(int argc, char** argv)
       cout << "Len and L1: " << len << " " << L1 << endl;
       cout << "Origin: " << vx << " " << vy << " " << vz << endl;
       cout << "Momentum before scattering: " << px << " " << py << " " << pz << " " << ene << endl;
+      cout << "Total POT: " << tot_pot << endl; 
       cout << "\n" << endl;
       double lpos = r->Uniform() * len + L1;
       TVector3 orig(vx,vy,vz);
@@ -668,6 +753,7 @@ int main(int argc, char** argv)
       cout <<"Transferred momentum to Ar q2: " << q2_out << endl;
 
       vt *= 1e9; // time is in s, needs to be in ns
+
       if(root_option) {
         TLorentzVector vX(xmom.X(),xmom.Y(),xmom.Z(),ene);
         TLorentzVector vertex(vtx.X(),vtx.Y(),vtx.Z(),vt);
@@ -676,7 +762,6 @@ int main(int argc, char** argv)
         dgam_pr = dgam;
         epos_pr = epos;
         eneg_pr = eneg;
-        out_q2 = q2_out; 
       }
       // transform all vectors into detector coordinate system
       vtx -= det_centre;
@@ -697,9 +782,7 @@ int main(int argc, char** argv)
       epos *= det_rot;
       eneg *= det_rot;
       
-
       cout << ievt << " " << 4 << " " << *name << " " << origin_id << endl;
-
        //    status      pdg         mother1     mother2     daugher1  daughter2
       cout << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
 		 << xmom.X() <<" " << xmom.Y() << " " << xmom.Z() <<" " <<ene <<" "<< mX <<" "
@@ -716,26 +799,14 @@ int main(int argc, char** argv)
 
      cout << "\n" << endl;
 
-      outputFile << ievt << " " << 4 << " " << *name << " " << origin_id << endl;
-      //    status      pdg         mother1     mother2     daugher1  daughter2
-      outputFile << 2 << " " << 41 << " " << 0 << " " << 0 << " " << 2 <<" "<< 2 << " "
-		 << xmom.X() <<" " << xmom.Y() << " " << xmom.Z() <<" " <<ene <<" "<< mX <<" "
-		 << orig.X() * cm << " " << orig.Y() * cm << " " << orig.Z() * cm << " " << vt <<endl;
-      outputFile << 2 << " " << 80 << " " << 1 << " " << 1 << " " << 3 <<" "<< 4 << " "
-		 << dgam.X() <<" " << dgam.Y() << " " << dgam.Z() <<" " <<dgam.E() <<" "<< dgam.M()  <<" "
-		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
-      outputFile << 1 << " " << -11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
-		 << epos.X() <<" " << epos.Y() << " " << epos.Z() <<" " <<epos.E() <<" "<< epos.M()  <<" "
-		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
-      outputFile << 1 << " " << 11 << " " << 2 << " " << 2 << " " << 0 <<" "<< 0 << " "
-		 << eneg.X() <<" " << eneg.Y() << " " << eneg.Z() <<" " <<eneg.E() <<" "<< eneg.M()  <<" "
-		 << vtx.X() * cm << " " << vtx.Y() * cm << " " << vtx.Z() * cm << " " << ivt <<endl;
-      ievt++;
+     ievt++;
 
-
-      if(root_option) {
+    if(root_option) {
         TLorentzVector vX(xmom.X(),xmom.Y(),xmom.Z(),ene);
+        TLorentzVector O(orig.X(),orig.Y(),orig.Z(), vt);
         TLorentzVector vertex(vtx.X(),vtx.Y(),vtx.Z(),ivt);
+        origin = O; 
+        weight = thisW; 
         intpos = vertex;
         inX = vX;
         vV = dgam;
@@ -746,37 +817,24 @@ int main(int argc, char** argv)
         vV_pr = dgam_pr;
         outE_pr = eneg_pr;
         outP_pr = epos_pr;
+        name_out = name; 
+        out_q2 = q2_out;
+        org_id = origin_id;
+        out_pot = tot_pot; 
         ot->Fill();
       }
     }
   }
 
-  TVector3 pot_vec;
-  if(inputmode=="root"){
-   pot_tree->SetBranchAddress("tot_pot",&tot_pot);
-   pot_tree->GetEntry(0);
-   pot_per_event = tot_pot/ot->GetEntries();
-   outputFile << tot_pot << " " << pot_per_event << "\n";
-   outputFile.close();
-   TVector3 temp_pot_vec(tot_pot, pot_per_event,0);
-   pot_vec = temp_pot_vec;
-   ot->Fill();
-  }
 
-
-  else if(inputmode=="txt"){
-    cout << "Final number of events: " << ievt << endl;
-    outputFile.close();
-  }
- 
-  if(root_option) {
+   if(root_option) {
     of->cd();
     ot->Write();
-    pot_vec.Write();
+    cout << "Final number of events: " << ievt << endl;
+    DumpHepevt(ot, outf);
     of->Close();
-
   }
-
+  
 
 
 }
