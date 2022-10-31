@@ -746,7 +746,8 @@ int main(int argc, char* argv[]){
   int trials = 0;
   vector<long> trials_list(chan_count,0);
   vector<int> scat_list(chan_count,0);
-  int nevent=0;
+  int nevent=0; 
+  int nother=0;
   vector<int> NDM_list(chan_count,0);
   vector<double> timing_efficiency(chan_count,0.0);
 
@@ -754,7 +755,7 @@ int main(int argc, char* argv[]){
   bool scatter_switch;
   int trials_max = par->Max_Trials();
   //if(SigGen->get_pMax()*Vnumtot<=1){
-  if(SigGen->get_pMax()<=0&&(outmode!="dm_detector_distribution" && outmode != "dm_dist_root")){
+  if(SigGen->get_pMax()<=0 && (outmode!="dm_detector_distribution" && outmode != "dm_dist_root")){
     cout << "pMax less than tolerance limit, skipping remainder of run\n";
   }
   else{
@@ -780,6 +781,10 @@ int main(int argc, char* argv[]){
         //Yes, this list is named vec.  
         for(list<Particle>::iterator iter = vec.begin(); iter != vec.end();iter++){
           //The way this is structured means I can't do my usual repeat thing to boost stats. 
+          if(isOther){
+            nother+=1;
+            continue;
+          }
           if(iter->name.compare(sig_part_name)==0){
             //iter->report(logging);
             NDM_list[i]++;
@@ -787,7 +792,8 @@ int main(int argc, char* argv[]){
               *comprehensive_out << DMGen_list[i]->Channel_Name() << " " << det->Ldet(*iter) << " ";
               iter->report(*comprehensive_out);
               scatter_switch=true;
-              continue;;
+              isOther = true;
+              continue;
             }
             //may need to replace this with a list<Particle> later
             //cout << SigGen->get_pMax() << endl;
@@ -829,7 +835,7 @@ int main(int argc, char* argv[]){
         }
 
       }
-      if(scatter_switch&&outmode=="comprehensive"){
+      if(scatter_switch && outmode=="comprehensive"){
         *comprehensive_out << "event " << ++nevent << endl;
         Record_Particles(*comprehensive_out, vec);
         *comprehensive_out << "endevent " << nevent << endl << endl;    
@@ -842,9 +848,10 @@ int main(int argc, char* argv[]){
 
       }
 
-      else if(scatter_switch)
+      else if(scatter_switch && outmode=="dm_detector_distribution"){
         ++nevent;
         //if(nevent%100 == 0) std::cout << "Event " << nevent << "/" << samplesize << std::endl;
+      }
 
     } 
   }
@@ -871,8 +878,8 @@ int main(int argc, char* argv[]){
     cout << DMGen_list[i]->Channel_Name() << ": " << (double)scat_list[i]/(double)trials_list[i]*Vnum_list[i]*SigGen->get_pMax()/repeat*par->Efficiency()*timing_efficiency[i]/scat_list[i];
     cout << " Timing_Efficiency: " << timing_efficiency[i]/scat_list[i] << " ";
     cout << "Events: " <<scat_list[i] << " Trials: " << trials_list[i] << " V_num: " << Vnum_list[i] << " pMax: " << SigGen->get_pMax() << " repeat: " << repeat << " efficiency: "  << par->Efficiency() << endl;;
-    if(outmode=="summary"||outmode=="dm_detector_distribution"||
-        outmode=="comprehensive"){
+    if(outmode=="summary" || outmode=="dm_detector_distribution"||
+       outmode=="comprehensive"){
       *summary_out << DMGen_list[i]->Channel_Name() << " " << mv  <<  " "  << mdm << " " << signal_list[i] << " " << kappa << " " << alD << " " << sigchoice << " " << POT << " " << par->Efficiency() << " " << samplesize << " " << Vnum_list[i] << " " << Vnumtot << endl;
     }
     NDM+=NDM_list[i]; 
@@ -914,6 +921,7 @@ int main(int argc, char* argv[]){
 
   }
 
+  cout << "Number of nothers: " << nother << endl; 
   cout << "Number of trials = " << trials << endl;	
   cout << "Number of candidates intersecting detector = " << NDM << endl;	
   cout << "Number of " << sigchoice <<  " = " << scattot << endl;
