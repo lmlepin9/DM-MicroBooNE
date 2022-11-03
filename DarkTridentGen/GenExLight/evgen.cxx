@@ -104,12 +104,13 @@ TLorentzVector pd[Nop+1];
 const double eps = 1e-3;
 const double alpha_D = 0.1;
 const double alpha = 1./137.;
-const double mX = 0.03;
-const double mV = 0.05;
 const double ee = TMath::Sqrt(4.*TMath::Pi()*alpha);
 const double gp = TMath::Sqrt(4.*TMath::Pi()*alpha_D);
 const double gc11 = gp; 
 const double gc8 = 18.*ee*eps; // 18*ee*eps
+
+double mX;
+double mV;
 string dm_type;
 double q2_out;
 
@@ -544,12 +545,14 @@ int main(int argc, char** argv)
   string outn = "";
   string inputmode = "txt"; // Default input mode: txt 
   string dm = "scalar"; // 
+  string mass = "";
+  string ratio = "";
 
 
   int seed = -1;
 
   char c;
-  while((c = getopt(argc, argv, "i:x:c:o:s:m:t:")) != -1) {
+  while((c = getopt(argc, argv, "i:x:c:o:s:f:t:m:r:")) != -1) {
     switch(c) {
       case 'i':
         infn = optarg; // input files
@@ -566,24 +569,31 @@ int main(int argc, char** argv)
       case 's':
         std::istringstream(optarg) >> seed; // seed value 
         break;
-      case 'm':
+      case 'f':
         inputmode = optarg; // input mode (root or text)
         break;
       case 't':
         dm = optarg; 
+      case 'm':
+        mass = optarg; // Need to provide dark photon mass
+      case 'r':
+        ratio = optarg; // Ratio of dark sector particles 
       default:
         break;
     }
   }
-
-  dm_type = dm;
-
-  cout << "Dark matter type: " << dm_type << endl; 
   
   if(infn.empty()||xsecdir.empty()) {
     cerr << "Need to supply input file " << endl;
     return -1;
   }
+
+  mX = stod(ratio) * stod(mass);
+  mV = stod(mass);
+  dm_type = dm;
+  cout << "Dark matter type: " << dm_type << endl; 
+  cout << "Dark photon mass: " << mass << endl;
+  cout << "Dark sector mass ratio: " << ratio << endl; 
 
   TTree *intree = new TTree;
   double ene, len, L1, px, py, pz, vx, vy, vz, vt, impwt, maxE;
