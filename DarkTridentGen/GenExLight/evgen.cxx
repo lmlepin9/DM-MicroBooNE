@@ -158,7 +158,8 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
   using TMath::Power;
   double m2; 
 
-  if(dm_type == "scalar"){
+  // According to Mathematica's results, these are the right matrix elements (2->3 scattering). 
+  if(dm_type == "fermion"){
       m2=FF*FF*(
       -32*Power(gc11,4)*Power(gc8,2)*(
         Power(MAp2,3)*(Mchi2*MNucAr2 + spSX*spSX2)
@@ -194,8 +195,8 @@ double mel2(const TLorentzVector& pX, const TLorentzVector& pN, const TLorentzVe
 
   }
 
-  else if(dm_type == "fermion"){
-    m2=  FF*FF*
+  else if(dm_type == "scalar"){
+    m2 = FF*FF*
   					(-4*std::pow(gc11,4)*std::pow(gc8,2))*
 					(MAp8*MNucAr2
            				- MAp6*(spSV_2 + 2*spSV*(-spSX + spSX2) + 2*spSX_spSX2_2 + 4*MNucAr2*(spVX - spVX2))
