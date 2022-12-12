@@ -1,24 +1,18 @@
 #include "Random.h"
-#include <iostream>
 
-std::mt19937 generator;
+std::default_random_engine generator;
 std::uniform_real_distribution<double> distribution;
 //------------------------------------------------------------------------------
 // The constructors
 // Set seed from the system timer or initiate seed yourself
 //
 Random::Random(){
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    //generator = std::default_random_engine(seed);
-    generator = std::mt19937(seed);
+    generator = std::default_random_engine(std::chrono::system_clock::now().time_since_epoch().count());
     distribution = std::uniform_real_distribution<double>(0.0,1.0);
-    std::cout << "Seed=" << seed << std::endl;
 }
 Random::Random(unsigned seed){ 
-    //generator = std::default_random_engine(seed);
-    generator = std::mt19937(seed);
+    generator = std::default_random_engine(seed);
     distribution = std::uniform_real_distribution<double>(0.0,1.0);
-    std::cout << "Seed=" << seed << std::endl;
 }
 
 //------------------------------------------------------------------------------

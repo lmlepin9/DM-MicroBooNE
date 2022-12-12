@@ -1,16 +1,14 @@
-
 #ifndef GUARD_detector_h
 #define GUARD_detector_h
 
 // class detector
 #include "Particle.h"
-
 #include <string>
 #include <vector>
 class Material {
     public:
         Material(double nd, double np, double nn, double ne, double m, std::string name) {nDensity=nd; Proton_Number=np; Neutron_Number=nn; Electron_Number=ne; matname=name; mass=m;}
-        double get_Density() {return nDensity;}
+       double get_Density() {return nDensity;}
         double PN() {return Proton_Number;}
         double NN() {return Neutron_Number;}
         double EN() {return Electron_Number;}
@@ -36,7 +34,6 @@ public:
     double M(unsigned int index) {return matvec[index].mass;}
     std::string matname(unsigned int index) {return matvec[index].matname;}
     unsigned mat_num() {return matvec.size();}
-    //These return the total number density of these components!
     double PNtot(){ return p_num_tot;}
     double NNtot(){ return n_num_tot;}
     double ENtot(){ return e_num_tot;}

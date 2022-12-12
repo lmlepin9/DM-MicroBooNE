@@ -1,13 +1,15 @@
 #include "Random.h"
 #include "Proton_Brem_Distribution.h"
+#include <math.h>
+#include <iostream>
+#include <functional>
 #include "Integrator.h"
 #include "branchingratios.h"
 #include "constants.h"
 
-#include <cmath>
-#include <iostream>
-#include <functional>
 #include <complex>
+
+#include <iostream>
 
 using std::complex;
 
@@ -34,7 +36,6 @@ Proton_Brem_Distribution::Proton_Brem_Distribution(double Beam_E, double epsilon
 	sppM = pow(2*mp+Mpp,2);
 	set_mass(mA);
 	calc_V_prod_rate();
-	cout << model << endl;
 }
 
 //Total proton-proton scattering cross section
@@ -109,13 +110,12 @@ void Proton_Brem_Distribution::calc_V_prod_rate(){
 		vprodrate = SimpsonCubature(func,ZMIN,ZMAX,100,PTMIN,PTMAX,100);//Will need to tweak this. Hopefully come up with a more general algorithm at some point.
 
 	max_prod=d2N_proton_brem_to_V(ZMIN,PTMIN);
-}
+};
 
 void Proton_Brem_Distribution::sample_particle(Particle &part){
 	double mom, theta, phi;
 	sample_momentum(mom, theta, phi);
-	part.Set_Mass(MA);
-	part.ThreeMomentumPolar(mom, theta, phi);//Rotate based on parts previous trajectory?
+	part.ThreeMomentumPolar(mom, theta, phi);
 }
 
 void Proton_Brem_Distribution::sample_momentum(double &pmom, double &theta, double &phi){

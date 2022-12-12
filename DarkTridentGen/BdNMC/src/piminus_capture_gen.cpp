@@ -2,7 +2,6 @@
 #include "branchingratios.h"
 #include "decay.h"
 #include "constants.h"
-
 #include <cstdlib>
 #include <iostream>
 #include <fstream>

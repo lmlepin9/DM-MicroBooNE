@@ -1,10 +1,8 @@
-DMNscattering.o: ../BdNMC_LANL/src/DMNscattering.cpp \
- ../BdNMC_LANL/src/DMNscattering.h \
- ../BdNMC_LANL/src/../../src/Kinematics.h \
- ../BdNMC_LANL/src/../../src/constants.h
+DMNscattering.o: ../src/DMNscattering.cpp ../src/DMNscattering.h \
+  ../src/Kinematics.h ../src/constants.h
 
-../BdNMC_LANL/src/DMNscattering.h:
+../src/DMNscattering.h:
 
-../BdNMC_LANL/src/../../src/Kinematics.h:
+../src/Kinematics.h:
 
-../BdNMC_LANL/src/../../src/constants.h:
+../src/constants.h:

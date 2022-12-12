@@ -1,12 +1,11 @@
 #include "Scatter.h"
 
 #include "minimization.h"
+#include "DMNscattering.h"
 #include "Kinematics.h"
 #include "Random.h"
 #include "constants.h"
 #include "decay.h"
-
-#include "../BdNMC_LANL/src/DMNscattering.h"
 
 #include <cmath>
 #include <iostream>
@@ -19,7 +18,9 @@ const double Mdelta = MASS_DELTA;
 const double convmcm = 100.0;
 const double tol_abs=1e-20;
 const double tol_frac=1e-10;
-
+const double Delta_to_pi0 = 2.0/3.0;
+const double Delta_to_pion_charged = 1.0/3.0;
+const double Delta_to_gamma=0.006;
 
 using std::cout;
 using std::endl;

@@ -1,15 +1,14 @@
 #include "Scatter.h"
 #include "minimization.h"
+#include "DMNscattering.h"
+#include "DMNscattering_Baryonic.h"
 #include "Kinematics.h"
-#include "Random.h"
-#include "constants.h"
-
-#include "../BdNMC_LANL/src/DMNscattering.h"
-#include "../BdNMC_LANL/src/DMNscattering_Baryonic.h"
-
 #include <cmath>
 #include <iostream>
+#include "Random.h"
 #include <algorithm>
+#include "constants.h"
+
 
 const double mp = MASS_PROTON;
 const double mn = MASS_NEUTRON;
@@ -44,7 +43,6 @@ Nucleon_Scatter::Nucleon_Scatter(double Emini, double Emaxi, double Eresi, doubl
     //cout << "Escatmin= " << Escatmin << " Escatmax= " << Escatmax << endl; 
 	min_angle=-1;//Set min_angle to less than zero so it always passes cut.
 	max_angle=2*pi+1;//Set max_angle to larger than 2*pi so it always passes cut.
-    //These may be changed by Scatter.h later on with its angle setting methods.
     coherent=cohere;
     if(coherent){
         if(det==NULL){
@@ -77,6 +75,7 @@ void Nucleon_Scatter::cross_gen_handler(std::function<double(double)> fp, std::f
         cross_vec_maxima.push_back(-1.0*golden(a,b,c,fplim,tol_frac,tol_abs,xmin));
     }
 }
+
 
 void Nucleon_Scatter::generate_cross_sections(){
 	std::vector<double> vec_proton_maxima;
@@ -204,13 +203,13 @@ bool Nucleon_Scatter::probscatter(std::shared_ptr<detector>& det, Particle &DM, 
             std::bind(dsig_cohp,DM.E,_1,DM.m,MDP,alD,
                 kap,det->PN(i)+det->NN(i),
                 det->PN(i));
+            
             Nucleon.Set_Mass(det->M(i));
             Nucleon.name = det->matname(i);
 
             if(scatmax(DM.E)<scatmin(DM.E, DM.m,Nucleon.m))
                 return false;
             scatterevent(DM,Nucleon,Xsec,atom_maxima[i]);
-
             return true;
         }
             
@@ -257,7 +256,6 @@ void Nucleon_Scatter::scatterevent (Particle &DM, Particle &Nucleon, std::functi
             thetaN = Ef_to_N_Theta(DM.E,xe,DM.m,Nucleon.m);
             phiN = Random::Flat(0,1)*2*pi;
             pN = sqrt(pow(DM.E+Nucleon.m-xe,2)-pow(Nucleon.m,2));
-            //cout << DM.E << " " << Nucleon.m << " " << xe << " " << DM.E - xe << " " << pN << endl;
             Nucleon.ThreeMomentum(pN*sin(thetaN)*cos(phiN),pN*sin(thetaN)*sin(phiN),cos(thetaN)*pN);
             Nucleon.Rotate_y(DM.Theta());
             Nucleon.Rotate_z(DM.Phi());

@@ -2,7 +2,6 @@
 #include "Distribution.h"
 #include "Particle_List.h"
 #include "Kinematics.h"
-
 #include <vector>
 #include <exception>
 #include <cmath>
@@ -13,10 +12,10 @@ using std::cout;
 using std::endl;
 using std::stod;
 
-Particle_List::Particle_List(const string& infile, bool set_pos){
+Particle_List::Particle_List(const string& infile, bool set_pos, bool use_weight){
 	POS = set_pos;
+        WEIGHT=use_weight;
 	part_count = 0;
-
 	instream.open(infile, std::ifstream::in);
 	if(instream.is_open()){
 		if(load_particle_batch()==0){
@@ -29,7 +28,6 @@ Particle_List::Particle_List(const string& infile, bool set_pos){
 		throw -1;
 	}
 	iter=partlist.begin();
-
 }
 //Loads particles into the list until the entire file is read, or the list is of length batch_size.
 //If batch_size is negative, the entire file is read.
@@ -42,7 +40,6 @@ int Particle_List::load_particle_batch(){
 		instream.seekg(0);
 	}*/
 	string hold;
-	cout << "Particle_List.cpp is loading particles\n";
 	while(std::getline(instream, hold)){
 		if((error_state=parse_line(hold))==0){
 			i++;
@@ -53,9 +50,9 @@ int Particle_List::load_particle_batch(){
 		}
 		else if(error_state==-1){
 			if(!POS)
-				cerr << "Format required is p_x p_y p_z E" << endl;
+				cerr << "Format required is p_x p_y p_z" << endl;
 			else
-				cerr << "Format required is p_x p_y p_z E x y z t" << endl;
+				cerr << "Format required is p_x p_y p_z x y z t" << endl;
 			cerr << "Line is improperly formatted: " << hold << endl;
 		}
 		else{
@@ -72,33 +69,19 @@ int Particle_List::parse_line(string& line){
 	std::size_t space_pos=0;
 	std::size_t next;
 	vector<string> sublist;
-	char white_space; 
-	if(line.find(' ')!=std::string::npos){
-		white_space = ' ';
-	}
-	else if(line.find('\t')!=std::string::npos){
-		white_space = '\t';
-	}
-	else if(line.find(',')!=std::string::npos){
-		white_space = ',';	
-	}
-	while((next=line.find(white_space,space_pos))!=std::string::npos){
+	while((next=line.find(' ',space_pos))!=std::string::npos){
 		sublist.push_back(line.substr(space_pos, next-space_pos));
-		space_pos=line.find(white_space,space_pos)+1;
+		space_pos=line.find(' ',space_pos)+1;
 	}
 	sublist.push_back(line.substr(space_pos));
 	double px, py, pz, E;
 	try{
 		px = stod(sublist[0]);
-
 		py = stod(sublist[1]);
-
 		pz = stod(sublist[2]);
-
 		E = stod(sublist[3]);
-
-		double x,y,z,t;
-		x=0;y=0;z=0;t=0;
+		double x,y,z,t,w;
+		x=0;y=0;z=0;t=0,w=1.;
 		if(POS){
 			if(sublist.size()>=7){
 				x = stod(sublist[4]);
@@ -108,10 +91,19 @@ int Particle_List::parse_line(string& line){
 					t = stod(sublist[7]);
 			}
 		}
-		partlist.push_back(_part(px,py,pz,E,x,y,z,t));
+                int id = stol(sublist[sublist.size()-1]);
+                if(WEIGHT) {
+                  w = stod(sublist[sublist.size()-2]);
+                  partlist.push_back(_part(px,py,pz,E,x,y,z,t));
+                  partlist.back().w = w;
+                  partlist.back().origin_id = id;
+                }
+                else {
+                  partlist.push_back(_part(px,py,pz,E,x,y,z,t));
+                  partlist.back().origin_id = id;
+                }
 	}
-	catch(std::exception const & e){
-		cout << "parse_line encounterd error: " << e.what() << endl;
+	catch(std::exception e){
 		return -1;
 	}
 	return 0;
@@ -127,6 +119,8 @@ void Particle_List::sample_particle(Particle &part){
 		part.Set_Creation_Time(iter->t);
  		//part.Set_Position(iter->x,iter->y,iter->z);
 		part.Set_Time(iter->t);
+                part.w = iter->w;
+                part.origin_id = iter->origin_id;
 	}
 	iter++;
 }

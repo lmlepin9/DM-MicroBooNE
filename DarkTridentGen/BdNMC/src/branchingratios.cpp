@@ -3,15 +3,14 @@
 #include "Random.h"
 #include "Kinematics.h"
 #include "constants.h"
-
 #include <functional>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+
 #include <fstream>
 #include <vector>
 #include <memory>
-
 
 using std::cout; using std::endl;
 
@@ -23,6 +22,8 @@ const double Br_etap_to_gamma_rho=0.291;
 const double Br_etap_to_gamma_omega=0.0275;
 const double Br_phi_to_e_e=2.9e-4;
 const double Br_rho_to_e_e = 4.72e-5;
+const double brpi0to2gamma = 0.98823;
+const double bretato2gamma = 0.3941;
 const double Br_omega_to_e_e = 7.28e-5;
 const double mmuon = MASS_MUON;
 const double etafactor = 0.61;
@@ -131,17 +132,13 @@ double Gamma_V_to_leptons(double mA, double eps, double ml){
 }
 
 double Gamma_V_to_hadrons(double mv, double kappa){
-    if(mv>MASS_MUON)
-        return Gamma_V_to_leptons(mv,kappa,MASS_MUON)*RRATIO(mv);   
-    return 0;
-}
-
-double RRATIO(double mv){
     if(!rratio_loaded){
         Load_2D_Interpolation(rratio_filename,rratio);
         rratio_loaded=true;
     }
-    return rratio->Interpolate(mv);
+    if(mv>MASS_MUON)
+        return Gamma_V_to_leptons(mv,kappa,MASS_MUON)*rratio->Interpolate(mv*mv);   
+    return 0;
 }
 
 double Gamma_V_to_visible(double mv, double kappa){
@@ -178,31 +175,69 @@ double brV_to_dm_dm(double mv, double mx, double kappa, double alphaD){
     return GammaV_to_dm_dm(mv, mx, kappa, alphaD)/GammaV(mv, mx, kappa, alphaD);
 }
 
-double d2brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta){
-    return sqrt(1-4*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+// Relevant for dark tridents 
+
+double d2brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta, std::string dm_type){
+    double d2br = 0; 
+    
+    if(dm_type=="scalar"){
+        d2br = sqrt(1-4*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+
+    else if(dm_type=="fermion"){
+        d2br =4*sqrt(1.0-4.0*mx*mx/s)*(pow(pow(mpi0,2)-s,3)*(s+2.0*mx*mx)*alphaD*pow(kappa,2))*pow(sin(theta),3)/(8*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return d2br; 
 }
 
-double dbrpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s){
-    return sqrt(1.0-4.0*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double dbrpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, std::string dm_type){
+    double dbr = 0;
+
+    if(dm_type=="scalar"){
+        dbr=sqrt(1.0-4.0*mx*mx/s)*pow(pow(mpi0,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+
+    else if(dm_type=="fermion"){
+        dbr = 4*alphaD*sqrt(1.0-4.0*mx*mx/s)*pow(kappa,2)*pow(pow(mpi0,2)-s,3)*(s+2.0*mx*mx)/(6.0*pow(mpi0,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+
+    }
+    return dbr;
 }
 
-double brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD){
+double brpi0_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, std::string dm_type){
     using namespace std::placeholders;
-    auto dbr = std::bind(dbrpi0_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1);
+    auto dbr = std::bind(dbrpi0_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1,dm_type);
     return DoubleExponential_adapt(dbr,4*mx*mx,pow(mpi0,2),100,0.1,1e-4);
 }
 
-double d2breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta){
-    return bretato2gamma/brpi0to2gamma*sqrt(1-4*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double d2breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, double theta, std::string dm_type){
+    double d2breta = 0;
+    if(dm_type == "scalar"){
+        d2breta = bretato2gamma/brpi0to2gamma*sqrt(1-4*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4*mx*mx)*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    else if(dm_type == "fermion"){
+        d2breta = bretato2gamma/brpi0to2gamma*sqrt(1-2.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s+2*mx*mx)*4*alphaD*pow(kappa,2)*pow(sin(theta),3)/(8*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return d2breta;
 }
 
-double dbreta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s){
-    return bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+double dbreta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, double s, std::string dm_type){
+    double dbreta=0;
+    if(dm_type == "scalar"){
+        dbreta = bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s-4.0*mx*mx)*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    else if(dm_type == "fermion"){
+        dbreta = bretato2gamma/brpi0to2gamma*sqrt(1.0-4.0*mx*mx/s)*pow(pow(meta,2)-s,3)*(s+2.0*mx*mx)*4*alphaD*pow(kappa,2)/(6.0*pow(meta,6)*pi*(pow(s-mv*mv,2)+pow(mv*GammaV(mv,mx,kappa,alphaD),2)));
+    }
+    return dbreta;
 }
 
-double breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD){
+double breta_to_gamma_dm_dm(double mv, double mx, double kappa, double alphaD, std::string dm_type){
     using namespace std::placeholders;
-    auto dbr = std::bind(dbreta_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1);
+    auto dbr = std::bind(dbreta_to_gamma_dm_dm,mv,mx,kappa,alphaD,_1, dm_type);
 	return DoubleExponential_adapt(dbr,4*mx*mx,pow(meta,2),100,0.1,1e-4);
 }
 
@@ -239,12 +274,6 @@ double wpp_scalar(double z, double pt2, double mA, double epsilon){
 	double H = pt2+(1-z)*mA*mA + pow(z*mp,2);
 	return pow(epsilon,2)*alphaEM/(8*pi)*(8*pow(mp,4)*(z-1)*pow(z,3)/pow(H,3)+4*pow(mp*mA,2)*(z-1)*pow(z,3)/pow(H,3)-8*pow(mp,2)*(z-1)*z/pow(H,2)+z/H);
 }
-/*
-double wpp_v_scalar(double z, double pt2, double ma){
-    double H = pt2+(1-z)*ma*ma+pow(z*mp,2);
-    return 1.0/16.0/pi/pi
-}*/
-
 
 /********************
  *BARYONIC COUPLING
@@ -355,73 +384,6 @@ double brphi_to_Vb(double mv, double mx, double kappa, double alphaD){
         (pow(pow(mphi,2)-pow(mv,2),2)+1e-4*pow(mphi,4))*pow(1-4*pow(mx/mv,2),1.5);
 }
 
-namespace Inelastic_DM{
-    double Gamma_A_to_dm1_dm2(double mass_dp, double mass_dm1,double mass_dm2,double alpha_D){
-        if(mass_dp<mass_dm1+mass_dm2){
-            return 0;
-        }
-        else{//Needs testing
-            return -alpha_D*one_to_two_decay::two_body_momentum(mass_dp,mass_dm1,mass_dm2)/(3*pow(mass_dp,4))*\
-            (mass_dm1-mass_dm2-mass_dp)*(mass_dm1-mass_dm2+mass_dp)*(pow(mass_dm1+mass_dm2,2)+2*pow(mass_dp,2));
-        }
-    }    
-}
-
-namespace Dark_Scalar{
-    using namespace std::complex_literals;
-
-    double betha(double m_S, double m){
-        return sqrt(1-pow(2*m/m_S,2));
-    }
-
-    double S_to_2leptons(double epsilon, double m_S, double m_lepton){
-        if(m_S <= 2*m_lepton)
-            return 0;
-        return (m_S*pow(epsilon,2)*pow(betha(m_S,m_lepton),3))/(8*pi)*pow(m_lepton/Vacuum_Expectation_Value,2);
-    }
-
-    std::complex<double> form_factor(double x){
-        if (x<=1){
-            return pow(asin(sqrt(x)),2);
-        }
-        else{
-            return -1.0/4.0*pow(log((1+sqrt(1.0-1.0/x))/(1-sqrt(1.0-1.0/x))) -1i*pi,2);
-        }
-    }
-
-    double S_to_2photon(double epsilon_l, double epsilon_q, double epsilon_w, double m_S){
-        double m_quark_uplike[3] = {MASS_UP, MASS_CHARM, MASS_TOP}; 
-        double m_quark_downlike[3] = {MASS_DOWN, MASS_STRANGE, MASS_BOTTOM};
-        double m_lepton[3] = {MASS_ELECTRON, MASS_MUON, MASS_TAU};
-
-        double v = Vacuum_Expectation_Value;
-
-        double x_w = pow(m_S/(2*MASS_W),2);
-        std::complex<double> A_W = -(2*x_w*x_w + 3*x_w + 3*(2*x_w-1)*form_factor(x_w))/pow(x_w,2);
-
-        std::complex<double> A_l = 0;
-        std::complex<double> A_q = 0;
-
-        double x_l,x_q;
-
-        for(int i=0; i!=3; i++){
-            x_l = pow(m_S/(2*m_lepton[i]),2);
-            A_l += 2.0*(x_l + (x_l-1)*form_factor(x_l))/pow(x_l,2);
-        }
-        for(int i=0; i!=3; i++){
-            x_q = pow(m_S/(2*m_quark_uplike[i]),2);
-            A_q += 3.0*pow(2.0/3.0,2)*(2.0*(x_q + (x_q-1.0)*form_factor(x_q))/pow(x_q,2));
-        }
-        for(int i=0; i!=3; i++){
-            x_q = pow(m_S/(2.0*m_quark_downlike[i]),2);
-            A_q += 3.0*pow(1.0/3.0,2)*(2.0*(x_q + (x_q-1)*form_factor(x_q))/pow(x_q,2));
-        }
-        std::complex<double> form_factor_photon = epsilon_q*A_q + epsilon_l*A_l + epsilon_w*A_W;
-        return pow(m_S,3)*pow(alphaEM/(4.0*pi),2)/(16*pi*v*v)*pow(abs(form_factor_photon),2);
-
-    }   
-}
-
 /*
  * DARK AXION WITH DARK PHOTON
  */
@@ -447,7 +409,11 @@ namespace Ax_DP{
     }
 
     double Gamma_dp_to_hadrons(double mA, double eps){
-        return Gamma_dp_to_lepton(mA, MASS_MUON, eps)*RRATIO(mA); 
+        if(!rratio_loaded){
+            Load_2D_Interpolation(rratio_filename,rratio);
+            rratio_loaded=true;
+        }
+        return Gamma_dp_to_lepton(mA, MASS_MUON, eps)*rratio->Interpolate(mA*mA); 
     }
 
     //From https://arxiv.org/abs/0807.3279
@@ -491,19 +457,3 @@ namespace Ax_DP{
         return Gamma_dp_to_3gamma(mA, eps, ep)/Gamma_dp(mA, ma, Gagpg, eps, ep);
     }
 }//End of namespace Ax_DP
-
-/*******************
-**GENERIC FUNCTIONS*
-********************/
-
-//mA is the mass of the emitted pseudoscalar, g is its coupling to the proton.
-double brem_split_pseudoscalar(double z, double pt2, double ma, double g){
-    double H = pt2+(1-z)*ma*ma + pow(z*mp,2);
-    return pow(g,2)*z*(H*H+2*H*ma*ma*(z-1)-2*ma*ma*(z-1)*(pow(MASS_PROTON*z,2)-ma*ma*(z-1)))/(16*pow(pi*H,2));
-}
-
-double Gamma_pseudoscalar_to_2fermion(double g, double m_parent, double m_daughter){
-    return 3*g*g/8.0*m_parent*sqrt(1-pow(4*m_daughter/m_parent,2));
-}
-
-//Add Vector to two fermions, vector to two scalars.

@@ -1,33 +1,18 @@
-Axion_Dark_Photon.o: ../src/Axion_Dark_Photon.cpp ../src/constants.h \
- ../src/branchingratios.h ../src/Scatter.h ../src/detector.h \
- ../src/Particle.h ../src/Random.h ../src/Integrator.h \
- ../src/DMgenerator.h ../src/decay.h ../src/Model.h ../src/Parameter.h \
- ../src/Distribution.h ../src/Kinematics.h ../src/SignalDecay.h
+Axion_Dark_Photon.o: ../src/Axion_Dark_Photon.cpp \
+  ../src/Axion_Dark_Photon.h ../src/Particle.h ../src/Random.h \
+  ../src/Parameter.h ../src/detector.h ../src/constants.h \
+  ../src/branchingratios.h
 
-../src/constants.h:
-
-../src/branchingratios.h:
-
-../src/Scatter.h:
-
-../src/detector.h:
+../src/Axion_Dark_Photon.h:
 
 ../src/Particle.h:
 
 ../src/Random.h:
 
-../src/Integrator.h:
-
-../src/DMgenerator.h:
-
-../src/decay.h:
-
-../src/Model.h:
-
 ../src/Parameter.h:
 
-../src/Distribution.h:
+../src/detector.h:
 
-../src/Kinematics.h:
+../src/constants.h:
 
-../src/SignalDecay.h:
+../src/branchingratios.h:

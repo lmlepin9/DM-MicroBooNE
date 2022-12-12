@@ -11,8 +11,7 @@
  */
 
 #include "minimization.h"
-
-#include <cmath>
+#include <math.h>
 #include <iostream>
 
 using std::cout; using std::endl;
@@ -35,9 +34,8 @@ double mnbrak(double& ax, double& bx, std::function<double(double)> func){
 	}
 	double cx = bx+GOLD*(bx-ax);
 	double fc=func(cx)+0.0;
-    if(fb==0&&fc==0){
+    if(fb==0&&fc==0)
         return cx;
-    }
 	while(fb>=fc){
 		r = (bx - ax)*(fb - fc);
 		q = (bx - cx)*(fb - fa);

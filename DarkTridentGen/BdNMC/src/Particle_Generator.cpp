@@ -1,5 +1,4 @@
 #include "Particle_Generator.h"
-
 #include <list>
 
 void Particle_Generator::Generate_Particle(Particle &part){

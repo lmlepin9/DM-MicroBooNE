@@ -1,11 +1,10 @@
 #include "DMgenerator.h"
 #include "branchingratios.h"
 #include "decay.h"
-#include "constants.h"
-
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include "constants.h"
 
 using std::cout; using std::endl;
 
@@ -95,89 +94,22 @@ Two_Body_Decay_Gen::Two_Body_Decay_Gen(double branching_ratio, double parent_mas
     daughter1 = Particle(Daughter1);
     daughter2 = Particle(Daughter2);
     branchingratio=branching_ratio;
-    tau = 0.0;
 }
 
-Two_Body_Decay_Gen::Two_Body_Decay_Gen(double branching_ratio, double parent_mass, std::string part_name, Particle Daughter1, Particle Daughter2, double lifetime){
-    if(parent_mass < Daughter1.m+Daughter2.m){
-        std::cerr << "Parent_Mass is smaller than daughter masses, invalid decay!\n";
-        throw -30;
-    }
-    Part_Name = std::string(part_name);
-    daughter1 = Particle(Daughter1);
-    daughter2 = Particle(Daughter2);
-    branchingratio=branching_ratio;
-    tau = lifetime;
-}
-
-void Two_Body_Decay_Gen::Toggle_Daughter_Decay(int index, std::shared_ptr<DMGenerator> daughter_decay_gen){
-    if(index==1){
-        d1_unstable=true;
-        d1_decay=daughter_decay_gen;
-    }
-    else if(index==2){
-        d2_unstable=true;
-        d2_decay=daughter_decay_gen;
-    }
-    else{
-        std::cerr << "Toggle_Daughter_Decay index must be 1 or 2. Index supplied was " << index << endl;
-        throw -1;
-    }
-}
-
-bool Two_Body_Decay_Gen::GenDM(std::list<Particle>& vec, std::function<double(Particle&)> det_int, Particle& parent){
+bool Two_Body_Decay_Gen::GenDM(std::list<Particle>& vec, std::function<double(Particle&)> det_int, Particle& part){
+    Particle parent = Particle(part);
     parent.name = Part_Name;
-    //cout << "tau=" << tau << endl;
-    if(tau>0){
-        double decay_time=tau*log(1/(1-Random::Flat()));
-        double boost = 1/sqrt(1-pow(parent.Speed(),2));
-        
-        //Need to turn on END_SET;
-        parent.END_SET=true;
-        parent.Increment_Time(decay_time*boost);
-        //cout << "decay distance = " << decay_time*boost*parent.Speed()*speed_of_light << endl;
-
-    }
-
-    if(record_parent)
-        vec.push_back(Particle(parent));
-
-    //DEBUG
-    //parent.report();
-
-    std::list<Particle>::iterator bookmark = vec.end();
+    vec.push_back(parent);
 
     TwoBodyDecay(parent, daughter1, daughter2);
     bool intersect=false;
-
-    if(d1_unstable&&(d1_decay->GenDM(vec, det_int, daughter1))){
-        vec.insert(bookmark,daughter1);
-        bookmark = vec.end();
-        intersect=true;
-    }
-    if(d2_unstable&&(d2_decay->GenDM(vec, det_int, daughter2))){
-        vec.insert(bookmark,daughter2);
-        bookmark = vec.end();
-        intersect=true;
-    }    
-
-//    cout << "Checking Daughter Crossings\n" << endl;
-    if(d1&&det_int(daughter1)>0){
+    if(det_int(daughter1)>0){
         intersect=true;
         vec.push_back(daughter1);
     }
-    if(d2&&det_int(daughter2)>0){
+    if(det_int(daughter2)>0){
         intersect=true;
         vec.push_back(daughter2);
     }
-
-    //cout << "EVENT GEN\n";
-    //parent.report(cout);
-    //cout << det_int(parent) << endl;
-  //  daughter1.report(cout);
-    //cout << det_int(daughter1) << endl;
-  //  daughter2.report(cout);
-    //cout << det_int(daughter2) << endl;
-    //cout << "veclen=" << vec.size() << endl;
     return intersect;
 }

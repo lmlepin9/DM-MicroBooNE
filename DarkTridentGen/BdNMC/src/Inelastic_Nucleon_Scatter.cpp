@@ -1,17 +1,15 @@
 
 #include "Scatter.h"
 #include "minimization.h"
+#include "DMNscattering.h"
 #include "Kinematics.h"
-#include "Random.h"
-#include "constants.h"
-
-#include "../BdNMC_LANL/src/DMNscattering.h"
-
-#include <fstream>
-#include <memory>
 #include <cmath>
 #include <iostream>
+#include "Random.h"
 #include <algorithm>
+#include "constants.h"
+#include <fstream>
+#include <memory>
 
 const double mp = MASS_PROTON;
 const double mn = MASS_NEUTRON;

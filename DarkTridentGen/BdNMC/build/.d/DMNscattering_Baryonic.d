@@ -1,10 +1,18 @@
-DMNscattering_Baryonic.o: ../BdNMC_LANL/src/DMNscattering_Baryonic.cpp \
- ../BdNMC_LANL/src/DMNscattering_Baryonic.h \
- ../BdNMC_LANL/src/../../src/Kinematics.h \
- ../BdNMC_LANL/src/../../src/constants.h
+DMNscattering_Baryonic.o: ../src/DMNscattering_Baryonic.cpp \
+  ../src/DMNscattering_Baryonic.h ../src/Particle.h ../src/Random.h \
+  ../src/Integrator.h ../src/detector.h ../src/Kinematics.h \
+  ../src/constants.h
 
-../BdNMC_LANL/src/DMNscattering_Baryonic.h:
+../src/DMNscattering_Baryonic.h:
 
-../BdNMC_LANL/src/../../src/Kinematics.h:
+../src/Particle.h:
 
-../BdNMC_LANL/src/../../src/constants.h:
+../src/Random.h:
+
+../src/Integrator.h:
+
+../src/detector.h:
+
+../src/Kinematics.h:
+
+../src/constants.h:
