@@ -16,6 +16,9 @@ import matplotlib as mpl
 mpl.use('Agg')
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import matplotlib.cbook as cbook
+from matplotlib import cm
 from larcv import larcv
 import gc
 
@@ -42,8 +45,8 @@ def EvDisp(input_file, tag, entry, producer="wire"):
     print("Event: " + str(image2d_data.event()))
     whole_img = image2d_data.at(img_plane)
     whole_image=larcv.as_ndarray(whole_img)
-    plt.figure(figsize=(15,6),dpi=300)
-    plt.imshow(whole_image.transpose(), cmap="jet",origin="lower")
+    plt.figure(figsize=(15,6),dpi=250)
+    plt.imshow(whole_image.transpose(), cmap="jet",origin="lower",norm=colors.PowerNorm(gamma=0.35,vmin=whole_image.min(), vmax=whole_image.max()))
     plt.axis("off")
     plt.savefig(fig_dir + tag + "_entry_" + str(entry) + "_.png", bbox_inches='tight', pad_inches=0.)
     iom.finalize()
@@ -53,7 +56,7 @@ def EvDisp(input_file, tag, entry, producer="wire"):
 
 def DisplayLoop():
     for i in range(100):
-        EvDisp("/pnfs/uboone/persistent/users/lmoralep/cnn_training/run1_numi_nu_MC_larcv_cnn_training.root", "run1_numi_cnn_training", i)
+        EvDisp("/pnfs/uboone/persistent/users/lmoralep/larcv_files/run1_NuMI_CV_larcv_set0.root", "run1_NuMI_CV_set0", i)
 
 
 if __name__ == "__main__":
