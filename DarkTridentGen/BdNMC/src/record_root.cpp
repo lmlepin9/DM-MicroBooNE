@@ -8,6 +8,7 @@ const double pi0_file_evts = 1525299.;
 const double eta_file_evts = 149190.;
 const double g4numi_pot    = 5e5;
 
+double meson_energy; 
 double dm_weight, dm_energy, dm_px, dm_py, dm_pz, dm_origin_x, dm_origin_y, dm_origin_z, dm_origin_t0, vx, vy, vz, vt, L, L1, L2;
 double dm_weight_other, dm_energy_other, dm_px_other, dm_py_other, dm_pz_other, dm_origin_x_other, dm_origin_y_other, dm_origin_z_other, dm_origin_t0_other, vx_other, vy_other, vz_other, vt_other, L_other, L1_other, L2_other;
 int event_number;
@@ -28,6 +29,7 @@ TTree* make_event_tree(){
 
     outtree->Branch("event_number", &event_number);
     outtree->Branch("id", &dm_id);
+    outtree->Branch("parent_energy",&meson_energy);
     outtree->Branch("dm_energy", &dm_energy);
     outtree->Branch("dm_weight", &dm_weight);
     outtree->Branch("dm_px", &dm_px);
@@ -105,14 +107,15 @@ TTree* make_model_tree(){
 void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOther, std::string channel_name, std::shared_ptr<detector> det){
 
     bool dm_found = false;
-
     event_number = nevent;
-
     for(list<Particle>::iterator it = partlist.begin(); it != partlist.end(); it++){
 
+        /* Filling with parent meson info */
+        if(it->name == "pion" || it->name == "eta"){
+            meson_energy = it->E; 
+        }
 
-
-        if(it->name == "DM"){
+        else if(it->name == "DM"){
             dm_mom    = channel_name;
 
             if(!isOther){
@@ -139,6 +142,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
                 L         = det->Ldet(*it);
 
                 dm_found = true;
+
                 
 
                 
@@ -179,7 +183,7 @@ void record_root(TTree *outtree, list<Particle> &partlist, int nevent, bool isOt
     
 }
 
-void record_pot(TTree *pot_tree, std::vector<std::shared_ptr<DMGenerator> > DMGen_list){
+void record_pot(TTree *pot_tree, std::vector<std::shared_ptr<DMGenerator> > DMGen_list, std::vector<double> n_mesons){
 
 
 
@@ -191,8 +195,14 @@ void record_pot(TTree *pot_tree, std::vector<std::shared_ptr<DMGenerator> > DMGe
         ntrials         = DMGen_list[i]->NTrials();
 
         double file_evts(-1);
-        if(channel_name == "pi0_decay")       file_evts = pi0_file_evts;
-        else if(channel_name == "eta_decay")  file_evts = eta_file_evts;
+        if(channel_name == "pi0_decay"){
+            std::cout << "Number of files used for Pi0 POT: " << n_mesons[0] << std::endl;    
+             file_evts = n_mesons[0];
+        }  
+        else if(channel_name == "eta_decay"){
+            std::cout << "Number of files used for Eta POT: " << n_mesons[1] << std::endl; 
+            file_evts = n_mesons[1];
+        }
 
         tot_pot = (g4numi_pot * ntrials / file_evts) / branching_ratio;
 
