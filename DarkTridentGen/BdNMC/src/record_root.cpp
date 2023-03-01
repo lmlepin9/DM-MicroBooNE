@@ -196,12 +196,12 @@ void record_pot(TTree *pot_tree, std::vector<std::shared_ptr<DMGenerator> > DMGe
 
         double file_evts(-1);
         if(channel_name == "pi0_decay"){
-            std::cout << "Number of files used for Pi0 POT: " << n_mesons[0] << std::endl;    
-             file_evts = n_mesons[0];
+            std::cout << "Number of files used for Pi0 POT: " << n_mesons[i] << std::endl;    
+             file_evts = n_mesons[i];
         }  
         else if(channel_name == "eta_decay"){
-            std::cout << "Number of files used for Eta POT: " << n_mesons[1] << std::endl; 
-            file_evts = n_mesons[1];
+            std::cout << "Number of files used for Eta POT: " << n_mesons[i] << std::endl; 
+            file_evts = n_mesons[i];
         }
 
         tot_pot = (g4numi_pot * ntrials / file_evts) / branching_ratio;
