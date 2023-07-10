@@ -8,6 +8,7 @@
 #include <exception>
 #include <numeric>
 #include <memory>
+#include <algorithm> 
 
 #include "constants.h"
 
@@ -230,6 +231,7 @@ int main(int argc, char* argv[]){
   //Production Mode
   vector<std::shared_ptr<DMGenerator> > DMGen_list;//Should be a unique_ptr
   vector<std::shared_ptr<Distribution> > PartDist_list;//This is an abstract class from which all distributions inherit.
+  vector<double> number_of_mesons; 
   vector<double> Vnum_list;
   vector<string> proddist_vec;
 
@@ -242,6 +244,9 @@ int main(int argc, char* argv[]){
 
   std::shared_ptr<list<production_channel> > prodlist = par->Get_Production_List();	
   int chan_count = prodlist->size(); 
+
+
+
 
   for(list<production_channel>::iterator proditer = prodlist->begin(); proditer!=prodlist->end(); proditer++){
     string prodchoice = proditer->Production_Channel(); 
@@ -266,6 +271,19 @@ int main(int argc, char* argv[]){
       if(set_pos){
         cout << "weights were read from particle_list file\n";
       }
+
+
+      double numLines = 0.;
+      std::ifstream in(proditer->particle_list_file);
+      std::string unused;
+      while ( std::getline(in, unused) ){
+        ++numLines;
+      } 
+
+      std::cout << "Number of lines on input file: " << numLines << std::endl;
+      number_of_mesons.push_back(numLines); 
+
+
       std::shared_ptr<Particle_List> pl(new Particle_List(proditer->particle_list_file,set_pos,set_weight));
       PartDist = pl;
     }
@@ -776,6 +794,8 @@ int main(int argc, char* argv[]){
       list<Particle> vec;
       Particle dist_part (0);
       PartDist_list[i]->Sample_Particle(dist_part);
+      //std::cout << "HOLA" << std::endl;
+      //std::cout << dist_part.E << std::endl;
       bool isOther = false;
       if(DMGen_list[i]->GenDM(vec, det_int, dist_part)){
         //Yes, this list is named vec.  
@@ -903,7 +923,7 @@ int main(int argc, char* argv[]){
 
   else if (outmode == "root_output"|| outmode == "dm_dist_root"){
 
-    record_pot(pot_tree, DMGen_list);
+    record_pot(pot_tree, DMGen_list,number_of_mesons);
 
   }
 
