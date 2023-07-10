@@ -11,12 +11,32 @@ from math import floor
 
 
 def ParseNumber(number):
+    '''
+    Arguments:
+        - number [float]
+    Retrieves the power of 10 and the base of 
+    a floating point number 
+
+    Return the base and the exponent of the power of 10 
+    '''
     exponent = floor(np.log10(number))
     base = number*10**(-1*exponent)
     return [base, exponent] 
 
 
 def CompareParse(input_a,input_b):
+    '''
+    Arguments:
+        - input_a [float]
+        - input_b [float]
+
+    This function expect b to be higher than a
+    if b has a different order of magnitude this
+    function scalets a in order to have both numbers
+    multiplied by the same power of 10.
+
+    Returns: The base of both numbers and the power of 10 
+    '''
     number_a = ParseNumber(input_a)
     number_b = ParseNumber(input_b)
 
@@ -34,6 +54,21 @@ def CompareParse(input_a,input_b):
 
 
 def LimitsTable(input_df):
+
+    '''
+
+    Arguments:
+        - input_df [Pandas dataframe]
+
+    This function expectes a data frame 
+    containing the limits obtained from Pyhf
+    or other limit setting framework.
+
+    It returns an string that can be used
+    to print the data frame into a 
+    latex table 
+
+    '''
 
     masses = input_df["mass"].to_numpy()
     observed = input_df["observed"].to_numpy()
