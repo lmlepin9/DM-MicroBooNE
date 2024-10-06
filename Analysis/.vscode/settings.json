@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "Macro_plot.C": "cpp",
+        "macro_old_samples.C": "cpp"
+    }
+}
