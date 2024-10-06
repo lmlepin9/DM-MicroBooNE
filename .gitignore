@@ -1,6 +1,11 @@
-# Executables:
+# Folders:
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
 
+# Files
 *.o 
 *.exe 
 *.so 
-*.d 
+*.d
+*.png
