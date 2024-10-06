@@ -1,9 +1,0 @@
-@software{dark_tridents_gen,
-  author = {Guzowski, Pawel, Mora, Luis and Navrer-Agasson, Anyssa},
-  doi = {},
-  month = {},
-  title = {{DarkTridentGen}},
-  url = {https://github.com/lmlepin9/DM-MicroBooNE},
-  version = {1.0},
-  year = {2023}
-}
